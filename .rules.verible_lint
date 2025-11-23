@@ -1,0 +1,15 @@
+# Enable/disable/tune Verible rules here.
+# Syntax:
+#   +rule-name            -> enable rule
+#   -rule-name            -> disable rule
+#   rule-name=key:value   -> set a parameter
+
+# Style examples
++enum-name-style
+-no-tabs
+
+# Keep lines readable
+line-length=length:100
+
+# If your filenames don’t match module names, disable this (or add waivers)
+# -module-filename

@@ -1,0 +1,8 @@
+# Waive a long line only in generated files
+#waive --rule=line-length --location="^rtl/autogen_.*\.sv$"
+
+# Waive a specific rule for a line range
+#waive --rule=module-filename --line=1:20 --location="^rtl/autogen_.*\.sv$"
+
+# Regex-based waive (e.g., very long parameter lines)
+#waive --rule=line-length --regex="^\s*parameter\s+VERY_LONG_.*" --location="^rtl/.*\.sv$"

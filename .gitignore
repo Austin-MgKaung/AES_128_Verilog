@@ -1,0 +1,70 @@
+# --- OS / Editor junk ---
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+*.code-workspace
+
+# --- Python / pytest ---
+.venv/
+venv/
+ENV/
+__pycache__/
+*.py[cod]
+*.egg-info/
+.eggs/
+.pytest_cache/
+.cache/
+.mypy_cache/
+.pyre/
+.tox/
+.python-version
+.coverage
+.coverage.*
+htmlcov/
+
+# --- cocotb / sim build outputs ---
+sim_build/
+build/
+
+# --- Waves (view in Surfer/GTKWave, don’t commit) ---
+*.fst
+*.vcd
+*.lxt*
+*.ghw
+
+# --- Icarus ---
+*.vvp
+
+# --- Verilator ---
+obj_dir/
+# Verilator coverage dumps & reports
+**/coverage.dat
+**/coverage_*.dat
+**/coverage.info
+**/cov_html/
+
+# --- Logs / temp artifacts ---
+*.log
+*.jou
+*.tmp
+*.swp
+*.swo
+junit.xml
+test-results/
+
+# Vivado project outputs (optional)
+*.xpr
+.Xil/
+*.runs/
+*.cache/
+*.hw/
+*.ip_user_files/
+*.sim/
+*.str
+*.ltx
+*.wdb
+usage_statistics_webtalk.xml
+webtalk/
+# Bitstreams (usually large; consider Git LFS if you must keep them)
+*.bit

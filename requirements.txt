@@ -1,0 +1,14 @@
+cocotb==2.0.1
+cocotb-test
+cocotb-coverage==2.0.0
+pytest
+pytest-html
+pytest-cov
+pycryptodome
+pyyaml
+python-constraint
+
+
+
+
+
