@@ -248,31 +248,31 @@ module aes128_encrypt (
     always @(posedge clk) begin
         
         case (state)
-        2'b00: begin
-            donereg <= 0;
-            if (start == 1) begin
+            2'b00: begin
+                donereg <= 0;
+                if (start == 1) begin
                 state <= 2'b01;
+                end
             end
-        end
-        2'b01: begin
-            round_key0 <= key;
-            ENCRYP_o1 <= block_in;
-            Cnt <= Cnt + 1;
-            if (Cnt == 11) begin
-                state <= 2'b10;
-                Cnt <= 0;
+            2'b01: begin
+                round_key0 <= key;
+                ENCRYP_o1 <= block_in;
+                Cnt <= Cnt + 1;
+                if (Cnt == 11) begin
+                    state <= 2'b10;
+                    Cnt <= 0;
+                end
+                
             end
-            
-        end
-        2'b10: begin
-            donereg <= 1;
-            block_out <= ENCRYP_o11;
-            state <= 2'b00;
-        end
+            2'b10: begin
+                donereg <= 1;
+                block_out <= ENCRYP_o11;
+                state <= 2'b00;
+            end
 
 
         
-    endcase
+        endcase
         
         round_key1reg <= round_key1;
         round_key2reg <= round_key2;
