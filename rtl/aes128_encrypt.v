@@ -251,7 +251,7 @@ module aes128_encrypt (
             2'b00: begin
                 donereg <= 0;
                 if (start == 1) begin
-                state <= 2'b01;
+                    state <= 2'b01;
                 end
             end
             2'b01: begin
