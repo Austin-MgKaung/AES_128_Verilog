@@ -288,9 +288,9 @@ module aes128_encrypt (
         
     end
     
-    always @(*) begin
-        done = donereg;
-    end
+    
+    assign done = donereg;
+   
     
 `ifndef SYNTHESIS
     // Simple waveform dump for simulators (ignored for synthesis)
