@@ -270,6 +270,8 @@ module aes128_encrypt (
                 state <= 2'b00;
             end
 
+            default: state <= 2'b00;
+
 
         
         endcase
