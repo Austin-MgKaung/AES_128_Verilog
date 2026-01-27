@@ -298,5 +298,13 @@ module aes128_encrypt (
 `endif
 
 endmodule
+`include "ELE_455_AES128_SBOX.v"
+`include "ELE_455_AES128_MIXCOLS.v"
+`include "ELE_455_AES128_SHFTROWS.v"
+`include "ELE_455_AES128_RKEXP.v"
+`include "ELE_455_AES128_top.v"
+`include "EEE_455_AES128_topmod.v"
+
+`default_nettype wire
 
 `default_nettype wire
