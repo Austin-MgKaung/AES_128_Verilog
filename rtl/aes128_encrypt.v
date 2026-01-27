@@ -50,7 +50,7 @@ module aes128_encrypt (
     reg clk_out8del;
     reg clk_out9del;
     reg clk_out10del;
-
+    reg donereg;
     reg [127:0] round_key2reg; 
     reg [127:0] round_key3reg; 
     reg [127:0] round_key4reg; 
@@ -249,7 +249,7 @@ module aes128_encrypt (
         
         case (state)
         2'b00: begin
-            done = 0;
+            donereg <= 0;
             if (start == 1) begin
                 state <= 2'b01;
             end
@@ -265,7 +265,7 @@ module aes128_encrypt (
             
         end
         2'b10: begin
-            done = 1;
+            donereg <= 1;
             block_out <= ENCRYP_o11;
             state <= 2'b00;
         end
@@ -288,7 +288,10 @@ module aes128_encrypt (
         
     end
     
-
+    always @(*) begin
+        done = donereg;
+    end
+    
 `ifndef SYNTHESIS
     // Simple waveform dump for simulators (ignored for synthesis)
     initial begin
