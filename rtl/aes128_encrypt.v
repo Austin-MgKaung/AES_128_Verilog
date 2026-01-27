@@ -39,7 +39,7 @@ module aes128_encrypt (
     wire [127:0] round_key9;
     wire [127:0] round_key10;
 
-    reg [127:0] key;
+    
     reg [127:0] clk_out1del;
     reg clk_out2del;
     reg clk_out3del;
@@ -298,13 +298,6 @@ module aes128_encrypt (
 `endif
 
 endmodule
-`include "ELE_455_AES128_SBOX.v"
-`include "ELE_455_AES128_MIXCOLS.v"
-`include "ELE_455_AES128_SHFTROWS.v"
-`include "ELE_455_AES128_RKEXP.v"
-`include "ELE_455_AES128_top.v"
-`include "EEE_455_AES128_topmod.v"
 
-`default_nettype wire
 
 `default_nettype wire
