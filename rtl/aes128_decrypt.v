@@ -128,8 +128,6 @@ module aes128_decrypt (
 
 endmodule
 
-
-
 module aes_decrypt_round(
     input  wire        clk,
     input  wire [127:0] decrypt_i,
@@ -226,8 +224,10 @@ module aes_decrypt_round_final (
     invsubbytes s14 (.clk(clk), .in_byte(inv_shift_o[15:8]),    .out_byte(inv_s_out[15:8]));
     invsubbytes s15 (.clk(clk), .in_byte(inv_shift_o[7:0]),     .out_byte(inv_s_out[7:0]));
 
-    always @(posedge clk) begin
-        decrypt_o <= inv_s_out ^ key_aligned;
-    end
+    always @(*) begin
+      decrypt_o <= inv_s_out ^ key_aligned;
+     end
 
+     
 endmodule
+
