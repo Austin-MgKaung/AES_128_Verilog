@@ -6,30 +6,20 @@
 // where s is the S-box output byte, and b is the multiplicative inverse.
 // -----------------------------------------------------------------------------
 module invaffine (
-    input  wire        clk,
-    input  wire [7:0]  in_byte,
-    output reg  [7:0]  out_byte
+    input  wire       clk,
+    input  wire [7:0] in_byte,
+    output reg  [7:0] out_byte
 );
 
-    reg [7:0] s0;
-    reg [7:0] r1_1, r3_1, r6_1;
-    reg [7:0] x2;
-    reg [7:0] x3;
+    wire [7:0] r1 = {in_byte[6:0], in_byte[7]};
+    wire [7:0] r3 = {in_byte[4:0], in_byte[7:5]};
+    wire [7:0] r6 = {in_byte[1:0], in_byte[7:2]};
 
-    always @(posedge clk) begin
-        s0   <= in_byte;
-
-        r1_1 <= {s0[6:0], s0[7]};
-        r3_1 <= {s0[4:0], s0[7:5]};
-        r6_1 <= {s0[1:0], s0[7:2]};
-
-        x2   <= r1_1 ^ r3_1;
-
-        x3   <= x2 ^ r6_1;
-
-        out_byte <= x3 ^ 8'h05;
-    end
-
+    wire [7:0] comb = in_byte ^ r1 ^ r3 ^ r6 ^ 8'h05;
+    
+    always @(posedge clk)
+        out_byte <= comb;       
+    
 endmodule
 
 
