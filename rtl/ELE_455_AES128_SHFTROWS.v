@@ -21,10 +21,8 @@
 
 
 module ELE_455_AES128_SHFTROWS(
-
     input  wire [127:0] state_in,   // 128-bit AES state input
     output wire [127:0] state_out   // 128-bit AES state output
-    
 );
 
     // -----------------------------------------------------------
