@@ -29,7 +29,7 @@ from .inverse_mix_columns import inv_mixcolumns
 from .inverse_mix_columns_LUT import inv_mixcolumns_lut
 from .inverse_subbytes_LUT import inv_sub_bytes_block as lut_inv_sub_bytes_block
 
-def encrypt_block(key: bytes, pt: bytes, first: bool = False) -> bytes:
+def encrypt_block(key: bytes, pt: bytes) -> bytes:
     """
     Encrypt one 16-byte block with a 16-byte AES-128 key.
     Return: 16-byte ciphertext.
@@ -98,7 +98,7 @@ def encrypt_block(key: bytes, pt: bytes, first: bool = False) -> bytes:
     # Convert plaintext and key to state
 
 
-def decrypt_block(key: bytes, ct: bytes, first: bool = False) -> bytes:
+def decrypt_block(key: bytes, ct: bytes) -> bytes:
     """
     Decrypt one 16-byte block with AES-128/192/256 depending on key length.
     Return: 16-byte plaintext.
