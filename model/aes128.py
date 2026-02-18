@@ -50,41 +50,41 @@ def encrypt_block(key: bytes, pt: bytes) -> bytes:
     # Rounds 1 to Nr-1 
     for roundNumber in range(Nr - 1):
         
-        __print(first,f"\n Round {roundNumber + 1} Start: ")
+        __print("\n Round {roundNumber + 1} Start: ")
 
         # SubBytes  --->  Performs algorithmic calculation of the S-box using Inverse Galois field multiplication
         subBytesOutput = lut_sub_bytes_block(initialInput)
-        __print(first,"SubBytes output:", ", ".join(f"{x:02X}" for x in subBytesOutput))
+        __print("SubBytes output:", ", ".join(f"{x:02X}" for x in subBytesOutput))
 
         # ShiftRows --->  Performs left shift on the 2nd, 3rd and 4th row of the subBytes output
         shiftRowsOutput = shift_rows(subBytesOutput)
-        __print(first,"ShiftRows output:", ", ".join(f"{x:02X}" for x in shiftRowsOutput))
+        __print("ShiftRows output:", ", ".join(f"{x:02X}" for x in shiftRowsOutput))
 
         # MixColumns  --->  Performs matrix multiplication using galois field multiplication on each column and a specific matrix
         mixColumnsOutput = mixcolumns_lut(shiftRowsOutput)
-        __print(first,"MixColumns output:", ", ".join(f"{x:02X}" for x in mixColumnsOutput))
+        __print("MixColumns output:", ", ".join(f"{x:02X}" for x in mixColumnsOutput))
         # AddRoundKey  --->  Accesses the relevant round key and XORs it to the MixColumns output
         roundKey = get_round_key(key_expanded, roundNumber + 1)
 
         addRoundKeyOutput = add_round_key(mixColumnsOutput, roundKey)
-        __print(first,"AddRoundKey output:", ", ".join(f"{x:02X}" for x in addRoundKeyOutput))
-        __print(first,f"\n Round {roundNumber + 1} completed successfuly")
+        __print("AddRoundKey output:", ", ".join(f"{x:02X}" for x in addRoundKeyOutput))
+        __print("\n Round {roundNumber + 1} completed successfuly")
 
         # Assigns the AddRoundKey output as the new input for the start of the next round
         initialInput = addRoundKeyOutput
 
     # Final Round (Round Nr): SubBytes, ShiftRows, AddRoundKey (no MixColumns)
-    __print(first,f"\n Final Round (Round {Nr}) Start: ")
+    __print("\n Final Round (Round {Nr}) Start: ")
     finalSubBytes = lut_sub_bytes_block(initialInput)
-    __print(first,"Final SubBytes output:", ", ".join(f"{x:02X}" for x in finalSubBytes))
+    __print("Final SubBytes output:", ", ".join(f"{x:02X}" for x in finalSubBytes))
 
     finalShiftRows = shift_rows(finalSubBytes)
-    __print(first,"Final ShiftRows output:", ", ".join(f"{x:02X}" for x in finalShiftRows))
+    __print("Final ShiftRows output:", ", ".join(f"{x:02X}" for x in finalShiftRows))
 
     finalKey = get_round_key(key_expanded, Nr)
 
     cipherText = add_round_key(finalShiftRows, finalKey)
-    __print(first,"Encrypted Output:", ", ".join(f"{x:02X}" for x in cipherText))
+    __print("Encrypted Output:", ", ".join(f"{x:02X}" for x in cipherText))
 
     return cipherText
     # For now, we raise to let tests SKIP this part in CI.
@@ -114,46 +114,46 @@ def decrypt_block(key: bytes, ct: bytes) -> bytes:
     key_expanded = key_expansion(key)
     # Initial AddRoundKey with the LAST round key (Round Nr)
     initialInput = add_round_key(ct, get_round_key(key_expanded, Nr))
-    __print(first,f"\n Initial AddRoundKey (Round {Nr}) applied.")
+    __print("\n Initial AddRoundKey (Round {Nr}) applied.")
 
     # Rounds Nr-1 down to 1:
     for roundNumber in range(Nr - 1, 0, -1):
 
-        __print(first,f"\n Round {roundNumber} Start (decryption): ")
+        __print("\n Round {roundNumber} Start (decryption): ")
 
         # InvShiftRows ---> right shifts rows (inverse of ShiftRows)
         invShiftRowsOutput = inv_shift_rows(initialInput)
-        __print(first,"InvShiftRows output:", ", ".join(f"{x:02X}" for x in invShiftRowsOutput))
+        __print("InvShiftRows output:", ", ".join(f"{x:02X}" for x in invShiftRowsOutput))
         # InvSubBytes ---> applies inverse S-box (your algorithmic inverse)
         invSubBytesOutput = lut_inv_sub_bytes_block(invShiftRowsOutput)
-        __print(first,"InvSubBytes output:", ", ".join(f"{x:02X}" for x in invSubBytesOutput))
+        __print("InvSubBytes output:", ", ".join(f"{x:02X}" for x in invSubBytesOutput))
 
         # AddRoundKey ---> XOR with the round key for this round
         roundKey = get_round_key(key_expanded, roundNumber)
 
         addRoundKeyOutput = add_round_key(invSubBytesOutput, roundKey)
-        __print(first,"AddRoundKey output:", ", ".join(f"{x:02X}" for x in addRoundKeyOutput))
+        __print("AddRoundKey output:", ", ".join(f"{x:02X}" for x in addRoundKeyOutput))
 
         # InvMixColumns ---> inverse column mix (skipped only in final round)
         invMixColumnsOutput = inv_mixcolumns_lut(addRoundKeyOutput)
-        __print(first,"InvMixColumns output:", ", ".join(f"{x:02X}" for x in invMixColumnsOutput))
-        __print(first,f"\n Round {roundNumber} completed successfully")
+        __print("InvMixColumns output:", ", ".join(f"{x:02X}" for x in invMixColumnsOutput))
+        __print("\n Round {roundNumber} completed successfully")
 
         # Next input for the following (earlier) round
         initialInput = invMixColumnsOutput
 
     # Final Round (Round 0): InvShiftRows, InvSubBytes, AddRoundKey(0) — no InvMixColumns
-    __print(first,f"\n Final Round (Round 0) Start (decryption): ")   
+    __print("\n Final Round (Round 0) Start (decryption): ")   
     finalInvShiftRows = inv_shift_rows(initialInput)
-    __print(first,"Final InvShiftRows output:", ", ".join(f"{x:02X}" for x in finalInvShiftRows))
+    __print("Final InvShiftRows output:", ", ".join(f"{x:02X}" for x in finalInvShiftRows))
 
     finalInvSubBytes = lut_inv_sub_bytes_block(finalInvShiftRows)
-    __print(first,"Final InvSubBytes output:", ", ".join(f"{x:02X}" for x in finalInvSubBytes))
+    __print("Final InvSubBytes output:", ", ".join(f"{x:02X}" for x in finalInvSubBytes))
 
     finalKey = get_round_key(key_expanded, 0)
 
     plainText = add_round_key(finalInvSubBytes, finalKey)
-    __print(first,"Decrypted Output:", ", ".join(f"{x:02X}" for x in plainText))
+    __print("Decrypted Output:", ", ".join(f"{x:02X}" for x in plainText))
 
     return plainText
     
