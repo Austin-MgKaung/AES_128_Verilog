@@ -7,8 +7,6 @@ Description:
     Provides functions for single-block encryption (ECB mode) returning 16 bytes.
 
 """
-
-
 # model/aes.py
 # Student implements: AES-128,192,256 single-block encrypt (ECB), returns 16 bytes.
 
