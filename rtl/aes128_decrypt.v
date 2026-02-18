@@ -12,7 +12,7 @@ module aes128_decrypt (
 
     reg [3:0] Cnt ;
     reg [1:0] state = 2'b00;
-    reg       donereg;
+    reg donereg;
     
     
     reg [127:0] round_key0;
