@@ -58,15 +58,9 @@ module EEE_455_AES128_topmod (
     wire [31:0] mixcols1_o;
     wire [31:0] mixcols2_o;
     wire [31:0] mixcols3_o;
-    //wire [127:0] key;
-    //reg [2:0] state;
-    //wire signal;
     
     initial begin
-        //key_i  = 128'h2b7e151628aed2a6abf7158809cf4f3c;
-        //plain_text  = 128'h3243f6a8885a308d313198a2e0370734;
-        //state = 0;
-        //plain_text  = 128'h3243f6a8885a308d313198a2e0370734; 
+
               
     end
     
@@ -157,25 +151,7 @@ module EEE_455_AES128_topmod (
     );   
 
     always @(posedge CLK) begin
-        ENCRYP_o <= shift_o ^ key;// something wrong with key;
+        ENCRYP_o <= shift_o ^ key;
     end
     
-    //always @(posedge CLK) begin
-    //    if (state == 2) begin
-    //    end else begin
-    //        if (state == 0) begin
-    //            TXT_ENCRYP <= plain_text ^ key;    
-    //            state <= state + 1;
-    //        end else begin 
-    //            //plain_text <= addrnd ^ key;
-    //            if (signal == 1) begin
-    //                ENCRYP_o <= shift_o ^ key;
-    //                state <= state + 1;
-    //            end else begin
-    //                TXT_ENCRYP <= addrnd ^ key;
-    //            end
-    //        end  
-    //    end
-    //end
-    //assign thing1 = ENCRYP_o;
 endmodule
