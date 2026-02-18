@@ -23,7 +23,6 @@ module aes128_encrypt (
     output reg  [127:0] block_out
 );
     reg [1:0] state = 2'b00;
-    
 
     reg [127:0] ENCRYP_o1;
     reg [127:0] round_key0;
