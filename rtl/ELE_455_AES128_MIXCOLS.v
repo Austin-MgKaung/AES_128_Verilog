@@ -21,10 +21,8 @@
 
 
 module ELE_455_AES128_MIXCOLS(
-
     input [31:0] word_in,   // 128-bit AES state input
     output wire [31:0] word_out
-    
 );
 
     wire [7:0] d0;
