@@ -10,115 +10,104 @@ module aes128_decrypt (
     output reg  [127:0] block_out
 );
 
-    localparam [1:0] S_IDLE = 2'd0;
-    localparam [1:0] S_LOAD = 2'd1;
-    localparam [1:0] S_RUN  = 2'd2;
-    localparam [1:0] S_DONE = 2'd3;
-
-    reg [1:0] state;
-    reg [8:0] cnt;
+    reg [3:0] Cnt ;
+    reg [1:0] state = 2'b00;
     reg       donereg;
-    assign done = donereg;
+    
+    
+    reg [127:0] round_key0;
+    wire [127:0] round_key1;
+    wire [127:0] round_key2;
+    wire [127:0] round_key3;
+    wire [127:0] round_key4;
+    wire [127:0] round_key5;
+    wire [127:0] round_key6;
+    wire [127:0] round_key7;
+    wire [127:0] round_key8;
+    wire [127:0] round_key9;
+    wire [127:0] round_key10;
 
-    // Registered inputs
-    reg [127:0] base_key;
-    reg [127:0] ct_reg;
+    reg [127:0] round_key1reg;
+    reg [127:0] round_key2reg; 
+    reg [127:0] round_key3reg; 
+    reg [127:0] round_key4reg; 
+    reg [127:0] round_key5reg; 
+    reg [127:0] round_key6reg; 
+    reg [127:0] round_key7reg; 
+    reg [127:0] round_key8reg; 
+    reg [127:0] round_key9reg; 
+    reg [127:0] round_key10reg; 
 
-    // RKEXP (unchanged) => pure wire cascade from registered base_key
-    wire [127:0] rk1_w, rk2_w, rk3_w, rk4_w, rk5_w, rk6_w, rk7_w, rk8_w, rk9_w, rk10_w;
+    ELE_455_AES128_RKEXP rkexp1 (.CLK(clk),.round(1),.key_i(round_key0),.key(round_key1));
+    ELE_455_AES128_RKEXP rkexp2 (.CLK(clk),.round(2),.key_i(round_key1reg),.key(round_key2));
+    ELE_455_AES128_RKEXP rkexp3 (.CLK(clk),.round(3),.key_i(round_key2reg),.key(round_key3));
+    ELE_455_AES128_RKEXP rkexp4 (.CLK(clk),.round(4),.key_i(round_key3reg),.key(round_key4));
+    ELE_455_AES128_RKEXP rkexp5 (.CLK(clk),.round(5),.key_i(round_key4reg),.key(round_key5));
+    ELE_455_AES128_RKEXP rkexp6 (.CLK(clk),.round(6),.key_i(round_key5reg),.key(round_key6));
+    ELE_455_AES128_RKEXP rkexp7 (.CLK(clk),.round(7),.key_i(round_key6reg),.key(round_key7));
+    ELE_455_AES128_RKEXP rkexp8 (.CLK(clk),.round(8),.key_i(round_key7reg),.key(round_key8));
+    ELE_455_AES128_RKEXP rkexp9 (.CLK(clk),.round(9),.key_i(round_key8reg),.key(round_key9));
+    ELE_455_AES128_RKEXP rkexp10 (.CLK(clk),.round(10),.key_i(round_key9reg),.key(round_key10));
 
-    ELE_455_AES128_RKEXP rkexp1  (.CLK(clk), .round(4'd1),  .key_i(base_key), .key(rk1_w));
-    ELE_455_AES128_RKEXP rkexp2  (.CLK(clk), .round(4'd2),  .key_i(rk1_w),    .key(rk2_w));
-    ELE_455_AES128_RKEXP rkexp3  (.CLK(clk), .round(4'd3),  .key_i(rk2_w),    .key(rk3_w));
-    ELE_455_AES128_RKEXP rkexp4  (.CLK(clk), .round(4'd4),  .key_i(rk3_w),    .key(rk4_w));
-    ELE_455_AES128_RKEXP rkexp5  (.CLK(clk), .round(4'd5),  .key_i(rk4_w),    .key(rk5_w));
-    ELE_455_AES128_RKEXP rkexp6  (.CLK(clk), .round(4'd6),  .key_i(rk5_w),    .key(rk6_w));
-    ELE_455_AES128_RKEXP rkexp7  (.CLK(clk), .round(4'd7),  .key_i(rk6_w),    .key(rk7_w));
-    ELE_455_AES128_RKEXP rkexp8  (.CLK(clk), .round(4'd8),  .key_i(rk7_w),    .key(rk8_w));
-    ELE_455_AES128_RKEXP rkexp9  (.CLK(clk), .round(4'd9),  .key_i(rk8_w),    .key(rk9_w));
-    ELE_455_AES128_RKEXP rkexp10 (.CLK(clk), .round(4'd10), .key_i(rk9_w),    .key(rk10_w));
-
-    // Datapath
-    reg  [127:0] st0;          // CT ^ RK10 registered
+    reg  [127:0] st0;          
     wire [127:0] st1, st2, st3, st4, st5, st6, st7, st8, st9, st10;
+        
+    aes_decrypt_round r9  (.clk(clk), .decrypt_i(st0 ^ round_key10reg ), .key(round_key9reg), .decrypt_o(st1));
+    aes_decrypt_round r8  (.clk(clk), .decrypt_i(st1), .key(round_key8reg), .decrypt_o(st2));
+    aes_decrypt_round r7  (.clk(clk), .decrypt_i(st2), .key(round_key7reg), .decrypt_o(st3));
+    aes_decrypt_round r6  (.clk(clk), .decrypt_i(st3), .key(round_key6reg), .decrypt_o(st4));
+    aes_decrypt_round r5  (.clk(clk), .decrypt_i(st4), .key(round_key5reg), .decrypt_o(st5));
+    aes_decrypt_round r4  (.clk(clk), .decrypt_i(st5), .key(round_key4reg), .decrypt_o(st6));
+    aes_decrypt_round r3  (.clk(clk), .decrypt_i(st6), .key(round_key3reg), .decrypt_o(st7));
+    aes_decrypt_round r2  (.clk(clk), .decrypt_i(st7), .key(round_key2reg), .decrypt_o(st8));
+    aes_decrypt_round r1  (.clk(clk), .decrypt_i(st8), .key(round_key1reg), .decrypt_o(st9));
 
-    aes_decrypt_round r9  (.clk(clk), .decrypt_i(st0), .key(rk9_w), .decrypt_o(st1));
-    aes_decrypt_round r8  (.clk(clk), .decrypt_i(st1), .key(rk8_w), .decrypt_o(st2));
-    aes_decrypt_round r7  (.clk(clk), .decrypt_i(st2), .key(rk7_w), .decrypt_o(st3));
-    aes_decrypt_round r6  (.clk(clk), .decrypt_i(st3), .key(rk6_w), .decrypt_o(st4));
-    aes_decrypt_round r5  (.clk(clk), .decrypt_i(st4), .key(rk5_w), .decrypt_o(st5));
-    aes_decrypt_round r4  (.clk(clk), .decrypt_i(st5), .key(rk4_w), .decrypt_o(st6));
-    aes_decrypt_round r3  (.clk(clk), .decrypt_i(st6), .key(rk3_w), .decrypt_o(st7));
-    aes_decrypt_round r2  (.clk(clk), .decrypt_i(st7), .key(rk2_w), .decrypt_o(st8));
-    aes_decrypt_round r1  (.clk(clk), .decrypt_i(st8), .key(rk1_w), .decrypt_o(st9));
+    aes_decrypt_round_final r0 (.clk(clk), .decrypt_i(st9), .key(round_key0), .decrypt_o(st10));
+ 
+always @(posedge clk) begin
+        
+        case (state)
+            2'b00: begin
+                donereg <= 0;
+                if (start == 1) begin
+                    state <= 2'b01;
+                end
+            end
+            2'b01: begin
+                round_key0 <= key;
+                st0 <= block_in;
+                Cnt <= Cnt + 1;
+                if (Cnt == 11) begin
+                    state <= 2'b10;
+                    Cnt <= 0;
+                end
+                
+            end
+            2'b10: begin
+                donereg <= 1;
+                block_out <= st10;
+                state <= 2'b00;
+            end
 
-    aes_decrypt_round_final r0 (.clk(clk), .decrypt_i(st9), .key(base_key), .decrypt_o(st10));
+            default: state <= 2'b00;
+        endcase
 
-    // Capture st10 one more time so top never samples "old" st10 in same edge
-    reg [127:0] st10_q;
-    always @(posedge clk) begin
-        st10_q <= st10;
+        round_key1reg <= round_key1;
+        round_key2reg <= round_key2;
+        round_key3reg <= round_key3;
+        round_key4reg <= round_key4;
+        round_key5reg <= round_key5;
+        round_key6reg <= round_key6;
+        round_key7reg <= round_key7;
+        round_key8reg <= round_key8;
+        round_key9reg <= round_key9;
+        round_key10reg <= round_key10;
+         
     end
-
-    // ---- Latency model (UPDATED) ----
-    localparam integer ISB_LAT = 17;  // <-- FIXED (was 16)
-    localparam integer IMC_LAT = 3;
-    localparam integer MID_LAT = ISB_LAT + IMC_LAT; // 20
-    localparam integer FIN_LAT = ISB_LAT + 1;       // 18
-
-
-    localparam integer RUN_LAT = 1 + (9*MID_LAT) + FIN_LAT + 1; // 1 + 180 + 18 + 1 = 200
-
-    // Control
-    always @(posedge clk) begin
-        if (rst) begin
-            state     <= S_IDLE;
-            cnt       <= 9'd0;
-            donereg   <= 1'b0;
-            block_out <= 128'd0;
-
-            base_key  <= 128'd0;
-            ct_reg    <= 128'd0;
-            st0       <= 128'd0;
-        end else begin
-            donereg <= 1'b0;
-
-            case (state)
-                S_IDLE: begin
-                    cnt <= 9'd0;
-                    if (start) begin
-                        base_key <= key;
-                        ct_reg   <= block_in;
-                        state    <= S_LOAD;
-                    end
-                end
-
-                S_LOAD: begin
-                    // initial AddRoundKey with RK10
-                    st0   <= ct_reg ^ rk10_w;
-                    cnt   <= 9'd0;
-                    state <= S_RUN;
-                end
-
-                S_RUN: begin
-                    cnt <= cnt + 9'd1;
-                    if (cnt == RUN_LAT) begin
-                        block_out <= st10_q;
-                        donereg   <= 1'b1;
-                        state     <= S_DONE;
-                        cnt       <= 9'd0;
-                    end
-                end
-
-                S_DONE: begin
-                    state <= S_IDLE;
-                end
-
-                default: state <= S_IDLE;
-            endcase
-        end
-    end
-
+    
+    assign done = donereg;
+        
+        
 `ifndef SYNTHESIS
     initial begin
         $dumpfile("dump.vcd");
@@ -135,20 +124,8 @@ module aes_decrypt_round(
     output wire [127:0] decrypt_o
 );
 
-    localparam integer ISB_LAT = 17;  // <-- match top
-
     wire [127:0] inv_shift_o;
     wire [127:0] inv_s_out;
-
-    // Delay key by ISB_LAT to align with inv_s_out
-    reg [127:0] key_pipe [0:ISB_LAT-1];
-    integer k;
-    always @(posedge clk) begin
-        key_pipe[0] <= key;
-        for (k=1; k<ISB_LAT; k=k+1)
-            key_pipe[k] <= key_pipe[k-1];
-    end
-    wire [127:0] key_aligned = key_pipe[ISB_LAT-1];
 
     invshift u_invshift (.state_in(decrypt_i), .state_out(inv_shift_o));
 
@@ -169,7 +146,7 @@ module aes_decrypt_round(
     invsubbytes s14 (.clk(clk), .in_byte(inv_shift_o[15:8]),    .out_byte(inv_s_out[15:8]));
     invsubbytes s15 (.clk(clk), .in_byte(inv_shift_o[7:0]),     .out_byte(inv_s_out[7:0]));
 
-    wire [127:0] ark = inv_s_out ^ key_aligned;
+    wire [127:0] ark = inv_s_out ^ key;
 
     wire [31:0] mc0, mc1, mc2, mc3;
     invmixcol m0 (.clk(clk), .col_in(ark[31:0]),    .col_out(mc0));
@@ -181,8 +158,6 @@ module aes_decrypt_round(
 
 endmodule
 
-
-
 module aes_decrypt_round_final (
     input  wire        clk,
     input  wire [127:0] decrypt_i,
@@ -190,20 +165,8 @@ module aes_decrypt_round_final (
     output reg  [127:0] decrypt_o
 );
 
-    localparam integer ISB_LAT = 17;  // <-- match top
-
     wire [127:0] inv_shift_o;
     wire [127:0] inv_s_out;
-
-    // Delay key by ISB_LAT to align with inv_s_out
-    reg [127:0] key_pipe [0:ISB_LAT-1];
-    integer k;
-    always @(posedge clk) begin
-        key_pipe[0] <= key;
-        for (k=1; k<ISB_LAT; k=k+1)
-            key_pipe[k] <= key_pipe[k-1];
-    end
-    wire [127:0] key_aligned = key_pipe[ISB_LAT-1];
 
     invshift u_invshift (.state_in(decrypt_i), .state_out(inv_shift_o));
 
@@ -224,10 +187,11 @@ module aes_decrypt_round_final (
     invsubbytes s14 (.clk(clk), .in_byte(inv_shift_o[15:8]),    .out_byte(inv_s_out[15:8]));
     invsubbytes s15 (.clk(clk), .in_byte(inv_shift_o[7:0]),     .out_byte(inv_s_out[7:0]));
 
-    always @(*) begin
-      decrypt_o <= inv_s_out ^ key_aligned;
-     end
-
+    wire [127:0] ark1 = inv_s_out ^ key;
      
+     always @(posedge clk) begin
+         decrypt_o = ark1;
+      end
+
 endmodule
 
