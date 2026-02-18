@@ -24,18 +24,11 @@ module ELE_455_AES128_top(
 
     input CLK,
     input [127:0] ENCRYP_i,
-    //input [127:0] plain_text,
     input [127:0] key,
     output reg [127:0] ENCRYP_o
-    //output wire [127:0] key
-    //output wire [127:0] thing1
     
     );
     
-    //reg [127:0] plain_text;
-    //reg [127:0] key_i;    
-    //reg [127:0] TXT_ENCRYP;
-    //reg [127:0] RKEXP_BRAM [43:0];
     wire [7:0] s_out5;
     wire [7:0] s_out6;
     wire [7:0] s_out7;
@@ -58,15 +51,9 @@ module ELE_455_AES128_top(
     wire [31:0] mixcols1_o;
     wire [31:0] mixcols2_o;
     wire [31:0] mixcols3_o;
-    //wire [127:0] key;
-    //reg [2:0] state;
-    //wire signal;
     
     initial begin
-        //key_i  = 128'h2b7e151628aed2a6abf7158809cf4f3c;
-        //plain_text  = 128'h3243f6a8885a308d313198a2e0370734;
-        //state = 0;
-        //plain_text  = 128'h3243f6a8885a308d313198a2e0370734; 
+
               
     end
     
@@ -182,22 +169,4 @@ module ELE_455_AES128_top(
         ENCRYP_o <= addrnd ^ key;// something wrong with key;
     end
     
-    //always @(posedge CLK) begin
-    //    if (state == 2) begin
-    //    end else begin
-    //        if (state == 0) begin
-    //            TXT_ENCRYP <= plain_text ^ key;    
-    //            state <= state + 1;
-    //        end else begin 
-    //            //plain_text <= addrnd ^ key;
-    //            if (signal == 1) begin
-    //                ENCRYP_o <= shift_o ^ key;
-    //                state <= state + 1;
-    //            end else begin
-    //                TXT_ENCRYP <= addrnd ^ key;
-    //            end
-    //        end  
-    //    end
-    //end
-    //assign thing1 = ENCRYP_o;
 endmodule
