@@ -126,7 +126,7 @@ def encrypt_block(key: bytes, pt: bytes) -> bytes:
     else:
         Nr = 14   # AES-256
 
-    key_expanded = key_expansion_aglorithm(key)
+    key_expanded = key_expansion_algorithm(key)
 
     # Initial round key addition (Round 0)
     initialInput = add_round_key(pt, get_round_key(key_expanded, 0))
