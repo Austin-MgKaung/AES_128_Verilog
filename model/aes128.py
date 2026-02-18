@@ -1,20 +1,20 @@
-# AES-128 Encryption Implementation
+# AES-128 implementation
 
-class AES128:
+class AES:
     def __init__(self, key):
         self.key = key
-        self.round_keys = self.key_expansion_algorithm()  # Fixed typo here
-
-    def key_expansion_algorithm(self):  # Fixed typo here
-        # Key expansion implementation
+        self.round_keys = self.key_expansion_algorithm(key)
+        
+    def key_expansion_algorithm(self, key):
+        # Implementation of key expansion algorithm
         pass
 
-    def encrypt_block(self, block):
-        # Encryption implementation
+    def encrypt(self, plaintext):
+        # Implementation of encryption
         pass
 
-    def decrypt_block(self, block):
-        # Fixed typo here
-        key = self.key_expansion_algorithm()  # Fixed typo here
-        # Decryption implementation
+    def decrypt(self, ciphertext):
+        # Implementation of decryption
         pass
+
+# Other methods and constants related to AES-128 would be added here
