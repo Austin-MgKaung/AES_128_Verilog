@@ -1,7 +1,6 @@
 `timescale 1ns/1ps
 
 module invsubbytes (
-    input  wire        clk,
     input  wire [7:0] in_byte,
     output wire [7:0] out_byte
 );
