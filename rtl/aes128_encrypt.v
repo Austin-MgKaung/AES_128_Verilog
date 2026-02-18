@@ -164,7 +164,7 @@ module aes128_encrypt (
 
     ELE_455_AES128_top top1 (
         .CLK(clk),//clk_out1),
-        .ENCRYP_i(ENCRYP_o1 ^ round_key0),
+        .ENCRYP_i(ENCRYP_o1),
         .ENCRYP_o(ENCRYP_o2),
         .key(round_key1reg)           
     );
