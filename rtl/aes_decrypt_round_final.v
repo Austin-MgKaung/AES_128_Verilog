@@ -12,10 +12,6 @@ module aes_decrypt_round_final (
     wire [127:0] inv_s_out;
     wire [127:0] inv_shift_o;
     
-    initial begin
-
-    end
-    
     invshift inv_shift(
         .state_in(decrypt_i),   
         .state_out(inv_shift_o)   
