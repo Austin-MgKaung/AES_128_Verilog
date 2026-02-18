@@ -23,12 +23,12 @@ module aes128_encrypt (
     output reg  [127:0] block_out
 );
     reg [1:0] state = 2'b00;
-    reg [3:0] Cnt;
+    
 
     reg [127:0] ENCRYP_o1;
     reg [127:0] round_key0;
     wire [127:0] round_key1;
-    reg [127:0] round_key1reg;
+    
     wire [127:0] round_key2;
     wire [127:0] round_key3;
     wire [127:0] round_key4;
@@ -50,7 +50,8 @@ module aes128_encrypt (
     reg clk_out8del;
     reg clk_out9del;
     reg clk_out10del;
-    reg donereg;
+    
+    reg [127:0] round_key1reg;
     reg [127:0] round_key2reg; 
     reg [127:0] round_key3reg; 
     reg [127:0] round_key4reg; 
@@ -150,8 +151,7 @@ module aes128_encrypt (
         .CLK(clk),//clk_out1),
         .round(9),
         .key_i(round_key8reg),
-        .key(round_key9)
-        
+        .key(round_key9)      
     );
     
     ELE_455_AES128_RKEXP rkexp10 (
@@ -159,123 +159,129 @@ module aes128_encrypt (
         .CLK(clk),//clk_out1),
         .round(10),
         .key_i(round_key9reg),
-        .key(round_key10)
-        
+        .key(round_key10)      
     );
 
     ELE_455_AES128_top top1 (
         .CLK(clk),//clk_out1),
         .ENCRYP_i(ENCRYP_o1 ^ round_key0),
         .ENCRYP_o(ENCRYP_o2),
-        .key(round_key1reg)//,
-        //.key(thing1)  
+        .key(round_key1reg)           
     );
     
     ELE_455_AES128_top top2 (
         .CLK(clk),//clk_out1),
         .ENCRYP_i(ENCRYP_o2),
         .ENCRYP_o(ENCRYP_o3),
-        .key(round_key2reg)//,
-        //.key(thing1)  
+        .key(round_key2reg)       
     );
     
     ELE_455_AES128_top top3 (
         .CLK(clk),//clk_out1),
         .ENCRYP_i(ENCRYP_o3),
         .ENCRYP_o(ENCRYP_o4),
-        .key(round_key3reg)//,
-        //.key(thing1)  
+        .key(round_key3reg)          
     );
     
     ELE_455_AES128_top top4 (
         .CLK(clk),//clk_out1),
         .ENCRYP_i(ENCRYP_o4),
         .ENCRYP_o(ENCRYP_o5),
-        .key(round_key4reg)//,
-        //.key(thing1)  
+        .key(round_key4reg)    
     );
     
     ELE_455_AES128_top top5 (
         .CLK(clk),//clk_out1),
         .ENCRYP_i(ENCRYP_o5),
         .ENCRYP_o(ENCRYP_o6),
-        .key(round_key5reg)//,
-        //.key(thing1)  
+        .key(round_key5reg)       
     );
     
     ELE_455_AES128_top top6 (
         .CLK(clk),//clk_out1),
         .ENCRYP_i(ENCRYP_o6),
         .ENCRYP_o(ENCRYP_o7),
-        .key(round_key6reg)//,
-        //.key(thing1)  
+        .key(round_key6reg)
     );
     
     ELE_455_AES128_top top7 (
         .CLK(clk),//clk_out1),
         .ENCRYP_i(ENCRYP_o7),
         .ENCRYP_o(ENCRYP_o8),
-        .key(round_key7reg)//,
-        //.key(thing1)  
+        .key(round_key7reg)    
     );
     
     ELE_455_AES128_top top8 (
-        .CLK(clk),//clk_out1),
+        .CLK(clk),
         .ENCRYP_i(ENCRYP_o8),
         .ENCRYP_o(ENCRYP_o9),
-        .key(round_key8reg)//,
-        //.key(thing1)  
+        .key(round_key8reg)       
+        
     );
     
     ELE_455_AES128_top top9 (
-        .CLK(clk),//clk_out1),
+        .CLK(clk),
         .ENCRYP_i(ENCRYP_o9),
         .ENCRYP_o(ENCRYP_o10),
-        .key(round_key9reg)//,
-        //.key(thing1)  
+        .key(round_key9reg)
     );
     
     EEE_455_AES128_topmod top10 (
-        .CLK(clk),//clk_out1),
+        .CLK(clk),
         .ENCRYP_i(ENCRYP_o10),
         .ENCRYP_o(ENCRYP_o11),
-        .key(round_key10reg)//,
-        //.key(thing1)  
+        .key(round_key10reg)
     );
     
     
+
     
-    always @(posedge clk) begin
-        
+    reg donereg;
+    
+      
+    localparam IDLE = 2'd0, BUSY = 2'd1;
+    reg [3:0] LAT;
+   
+always @(posedge clk) begin
+      if (rst) begin
+        donereg <= 0;
+        state   <= IDLE;
+        LAT     <= 4'd0;
+      end else begin
         case (state)
-            2'b00: begin
-                donereg <= 0;
-                if (start == 1) begin
-                    state <= 2'b01;
-                end
+    
+          IDLE: begin
+            LAT     <= 4'd0;
+            donereg <= 0;
+    
+            if (start == 1'b1) begin
+              round_key0 <= key;
+              ENCRYP_o1  <= block_in;
+              state      <= BUSY;
             end
-            2'b01: begin
-                round_key0 <= key;
-                ENCRYP_o1 <= block_in;
-                Cnt <= Cnt + 1;
-                if (Cnt == 11) begin
-                    state <= 2'b10;
-                    Cnt <= 0;
-                end
-                
+          end
+    
+          BUSY: begin
+            if (LAT == 4'd12) begin
+              donereg   <= 1;
+              block_out <= ENCRYP_o11;
+              state     <= IDLE;
+              LAT       <= 4'd0;
+            end else begin
+              LAT <= LAT + 4'd1;
             end
-            2'b10: begin
-                donereg <= 1;
-                block_out <= ENCRYP_o11;
-                state <= 2'b00;
-            end
-
-            default: state <= 2'b00;
-
-
-        
+          end
+    
+          default: begin
+            state <= IDLE;
+            LAT   <= 4'd0;
+          end
+    
         endcase
-        
+      end
+      
+      
+      
         round_key1reg <= round_key1;
         round_key2reg <= round_key2;
         round_key3reg <= round_key3;
@@ -286,12 +292,12 @@ module aes128_encrypt (
         round_key8reg <= round_key8;
         round_key9reg <= round_key9;
         round_key10reg <= round_key10;
-         
-        
     end
+
+
+           
     
-    
-    assign done = donereg;
+  assign done = donereg;
    
     
 `ifndef SYNTHESIS
