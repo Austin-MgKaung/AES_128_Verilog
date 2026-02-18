@@ -75,7 +75,7 @@ module aes128_encrypt (
 
     ELE_455_AES128_RKEXP rkexp1 (
      
-        .CLK(clk),//clk_out1), 
+        .CLK(clk),
         .round(1),
         .key_i(round_key0),
         .key(round_key1)
@@ -84,7 +84,7 @@ module aes128_encrypt (
     
     ELE_455_AES128_RKEXP rkexp2 (
      
-        .CLK(clk),//clk_out1),
+        .CLK(clk),
         .round(2),
         .key_i(round_key1reg),
         .key(round_key2)
@@ -93,7 +93,7 @@ module aes128_encrypt (
     
     ELE_455_AES128_RKEXP rkexp3 (
      
-        .CLK(clk),//clk_out1),
+        .CLK(clk),
         .round(3),
         .key_i(round_key2reg),
         .key(round_key3)
@@ -102,7 +102,7 @@ module aes128_encrypt (
     
     ELE_455_AES128_RKEXP rkexp4 (
      
-        .CLK(clk),//clk_out1),
+        .CLK(clk),
         .round(4),
         .key_i(round_key3reg),
         .key(round_key4)
@@ -111,7 +111,7 @@ module aes128_encrypt (
     
     ELE_455_AES128_RKEXP rkexp5 (
      
-        .CLK(clk),//clk_out1),
+        .CLK(clk),
         .round(5),
         .key_i(round_key4reg),
         .key(round_key5)
@@ -120,7 +120,7 @@ module aes128_encrypt (
     
     ELE_455_AES128_RKEXP rkexp6 (
      
-        .CLK(clk),//clk_out1),
+        .CLK(clk),
         .round(6),
         .key_i(round_key5reg),
         .key(round_key6)
@@ -129,7 +129,7 @@ module aes128_encrypt (
     
     ELE_455_AES128_RKEXP rkexp7 (
      
-        .CLK(clk),//clk_out1),
+        .CLK(clk),
         .round(7),
         .key_i(round_key6reg),
         .key(round_key7)
@@ -138,7 +138,7 @@ module aes128_encrypt (
     
     ELE_455_AES128_RKEXP rkexp8 (
      
-        .CLK(clk),//clk_out1),
+        .CLK(clk),
         .round(8),
         .key_i(round_key7reg),
         .key(round_key8)
@@ -147,7 +147,7 @@ module aes128_encrypt (
     
     ELE_455_AES128_RKEXP rkexp9 (
      
-        .CLK(clk),//clk_out1),
+        .CLK(clk),
         .round(9),
         .key_i(round_key8reg),
         .key(round_key9)      
@@ -155,56 +155,56 @@ module aes128_encrypt (
     
     ELE_455_AES128_RKEXP rkexp10 (
      
-        .CLK(clk),//clk_out1),
+        .CLK(clk),
         .round(10),
         .key_i(round_key9reg),
         .key(round_key10)      
     );
 
     ELE_455_AES128_top top1 (
-        .CLK(clk),//clk_out1),
+        .CLK(clk),
         .ENCRYP_i(ENCRYP_o1 ^ round_key0),
         .ENCRYP_o(ENCRYP_o2),
         .key(round_key1reg)           
     );
     
     ELE_455_AES128_top top2 (
-        .CLK(clk),//clk_out1),
+        .CLK(clk),
         .ENCRYP_i(ENCRYP_o2),
         .ENCRYP_o(ENCRYP_o3),
         .key(round_key2reg)       
     );
     
     ELE_455_AES128_top top3 (
-        .CLK(clk),//clk_out1),
+        .CLK(clk),
         .ENCRYP_i(ENCRYP_o3),
         .ENCRYP_o(ENCRYP_o4),
         .key(round_key3reg)          
     );
     
     ELE_455_AES128_top top4 (
-        .CLK(clk),//clk_out1),
+        .CLK(clk),
         .ENCRYP_i(ENCRYP_o4),
         .ENCRYP_o(ENCRYP_o5),
         .key(round_key4reg)    
     );
     
     ELE_455_AES128_top top5 (
-        .CLK(clk),//clk_out1),
+        .CLK(clk),
         .ENCRYP_i(ENCRYP_o5),
         .ENCRYP_o(ENCRYP_o6),
         .key(round_key5reg)       
     );
     
     ELE_455_AES128_top top6 (
-        .CLK(clk),//clk_out1),
+        .CLK(clk),
         .ENCRYP_i(ENCRYP_o6),
         .ENCRYP_o(ENCRYP_o7),
         .key(round_key6reg)
     );
     
     ELE_455_AES128_top top7 (
-        .CLK(clk),//clk_out1),
+        .CLK(clk),
         .ENCRYP_i(ENCRYP_o7),
         .ENCRYP_o(ENCRYP_o8),
         .key(round_key7reg)    
@@ -232,12 +232,8 @@ module aes128_encrypt (
         .key(round_key10reg)
     );
     
-    
-
-    
     reg donereg;
-    
-      
+
     localparam IDLE = 2'd0, BUSY = 2'd1;
     reg [3:0] LAT;
    
@@ -278,9 +274,7 @@ always @(posedge clk) begin
     
         endcase
       end
-      
-      
-      
+
         round_key1reg <= round_key1;
         round_key2reg <= round_key2;
         round_key3reg <= round_key3;
@@ -293,9 +287,6 @@ always @(posedge clk) begin
         round_key10reg <= round_key10;
     end
 
-
-           
-    
   assign done = donereg;
    
     
