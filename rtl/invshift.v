@@ -1,3 +1,5 @@
+`timescale 1ns/1ps
+
 module invshift (
     input  wire [127:0] state_in,
     output wire [127:0] state_out
