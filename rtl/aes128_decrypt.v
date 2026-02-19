@@ -11,7 +11,12 @@ module aes128_decrypt (
 );
 
     reg [1:0] state = 2'b00;
-    
+
+     // -------------------------------------------------------------------------
+    // Round Key registers and another version of Round Key, stored in registers used to pass values between rounds 
+    // round_key0 is = original key
+    // round_key1..10 generated via key expansion
+    // -------------------------------------------------------------------------
     
     reg [127:0] round_key0;
     wire [127:0] round_key1;
@@ -36,6 +41,10 @@ module aes128_decrypt (
     reg [127:0] round_key9reg; 
     reg [127:0] round_key10reg; 
 
+     // -------------------------------------------------------------------------
+    // Key Expansion Blocks: Each instantiation generates the next round key from the previous one as input.
+    // -------------------------------------------------------------------------
+
     ELE_455_AES128_RKEXP rkexp1 (.CLK(clk),.round(1),.key_i(round_key0),.key(round_key1));
     ELE_455_AES128_RKEXP rkexp2 (.CLK(clk),.round(2),.key_i(round_key1reg),.key(round_key2));
     ELE_455_AES128_RKEXP rkexp3 (.CLK(clk),.round(3),.key_i(round_key2reg),.key(round_key3));
@@ -47,10 +56,18 @@ module aes128_decrypt (
     ELE_455_AES128_RKEXP rkexp9 (.CLK(clk),.round(9),.key_i(round_key8reg),.key(round_key9));
     ELE_455_AES128_RKEXP rkexp10 (.CLK(clk),.round(10),.key_i(round_key9reg),.key(round_key10));
 
+
+     // -------------------------------------------------------------------------
+    // AES Decryption rounds: 
+    // -------------------------------------------------------------------------
+    
     reg  [127:0] st0;          
     wire [127:0] st1, st2, st3, st4, st5, st6, st7, st8, st9, st10;
-        
+
+    // First operation  add the final with block_in (st0) 
     aes_decrypt_round r9  (.clk(clk), .decrypt_i(st0 ^ round_key10reg ), .key(round_key9reg), .decrypt_o(st1));
+
+    // Then 9 full inverse rounds
     aes_decrypt_round r8  (.clk(clk), .decrypt_i(st1), .key(round_key8reg), .decrypt_o(st2));
     aes_decrypt_round r7  (.clk(clk), .decrypt_i(st2), .key(round_key7reg), .decrypt_o(st3));
     aes_decrypt_round r6  (.clk(clk), .decrypt_i(st3), .key(round_key6reg), .decrypt_o(st4));
@@ -60,12 +77,26 @@ module aes128_decrypt (
     aes_decrypt_round r2  (.clk(clk), .decrypt_i(st7), .key(round_key2reg), .decrypt_o(st8));
     aes_decrypt_round r1  (.clk(clk), .decrypt_i(st8), .key(round_key1reg), .decrypt_o(st9));
 
-    aes_decrypt_round_final r0 (.clk(clk), .decrypt_i(st9), .key(round_key0), .decrypt_o(st10));
+    // Final round excludes InvMixColumns
+    aes_decrypt_round_final r0 (.clk(clk), .decrypt_i(st9), .key(round_key0), .decrypt_o(st10));   
+    
+     // -------------------------------------------------------------------------
+    // FSM:
+    // IDLE  : Waiting for start pulse
+    // BUSY  : Processing decryption pipeline
+    // -------------------------------------------------------------------------
  
   reg donereg;
 
     localparam IDLE = 2'd0, BUSY = 2'd1;
     reg [7:0] LAT;
+
+
+    // -------------------------------------------------------------------------
+    // FSM: Reset (rst = 1): internal state is cleared, donereg is low.
+   
+    // BUSY  : Processing decryption pipeline
+    // -------------------------------------------------------------------------
    
 always @(posedge clk) begin
       if (rst) begin
@@ -78,17 +109,22 @@ always @(posedge clk) begin
           IDLE: begin
             LAT     <= 8'd0;
             donereg <= 0;
-    
+
+             // IDLE  : Start is pulsed high for one clock: key and block_in are latched together, AES-128 decryption begins
+              
             if (start == 1'b1) begin
               round_key0 <= key;
               st0  <= block_in;
               state      <= BUSY;
             end
           end
-    
+            
+         // After a fixed number of cycles (20 for decryption and 12 for encryption), the final register st10 is ready 
           BUSY: begin
             if (LAT == 8'd20) begin
               donereg   <= 1;
+
+              // st10 the final register is latched to block out, the output plaintext  
               block_out <= st10;
               state     <= IDLE;
               LAT       <= 8'd0;
@@ -105,6 +141,10 @@ always @(posedge clk) begin
         endcase
       end
 
+        // ---------------------------------------------------------------------
+        // Round Key pipeline registers ensure  keeps key schedule aligned with decrypt pipeline
+        // ---------------------------------------------------------------------
+    
         round_key1reg <= round_key1;
         round_key2reg <= round_key2;
         round_key3reg <= round_key3;
