@@ -10,9 +10,7 @@ module aes128_decrypt (
     output reg  [127:0] block_out
 );
 
-    reg [3:0] Cnt ;
     reg [1:0] state = 2'b00;
-    reg donereg;
     
     
     reg [127:0] round_key0;
@@ -64,33 +62,48 @@ module aes128_decrypt (
 
     aes_decrypt_round_final r0 (.clk(clk), .decrypt_i(st9), .key(round_key0), .decrypt_o(st10));
  
-always @(posedge clk) begin
-        
-        case (state)
-            2'b00: begin
-                donereg <= 0;
-                if (start == 1) begin
-                    state <= 2'b01;
-                end
-            end
-            2'b01: begin
-                round_key0 <= key;
-                st0 <= block_in;
-                Cnt <= Cnt + 1;
-                if (Cnt == 11) begin
-                    state <= 2'b10;
-                    Cnt <= 0;
-                end
-                
-            end
-            2'b10: begin
-                donereg <= 1;
-                block_out <= st10;
-                state <= 2'b00;
-            end
+  reg donereg;
 
-            default: state <= 2'b00;
+    localparam IDLE = 2'd0, BUSY = 2'd1;
+    reg [7:0] LAT;
+   
+always @(posedge clk) begin
+      if (rst) begin
+        donereg <= 0;
+        state   <= IDLE;
+        LAT     <= 8'd0;
+      end else begin
+        case (state)
+    
+          IDLE: begin
+            LAT     <= 8'd0;
+            donereg <= 0;
+    
+            if (start == 1'b1) begin
+              round_key0 <= key;
+              st0  <= block_in;
+              state      <= BUSY;
+            end
+          end
+    
+          BUSY: begin
+            if (LAT == 8'd20) begin
+              donereg   <= 1;
+              block_out <= st10;
+              state     <= IDLE;
+              LAT       <= 8'd0;
+            end else begin
+              LAT <= LAT + 8'd1;
+            end
+          end
+    
+          default: begin
+            state <= IDLE;
+            LAT   <= 8'd0;
+          end
+    
         endcase
+      end
 
         round_key1reg <= round_key1;
         round_key2reg <= round_key2;
@@ -102,10 +115,9 @@ always @(posedge clk) begin
         round_key8reg <= round_key8;
         round_key9reg <= round_key9;
         round_key10reg <= round_key10;
-         
     end
-    
-    assign done = donereg;
+
+  assign done = donereg;
         
         
 `ifndef SYNTHESIS
