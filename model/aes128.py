@@ -7,9 +7,6 @@ Description:
     Provides functions for single-block encryption (ECB mode) returning 16 bytes.
 
 """
-# model/aes.py
-# Student implements: AES-128,192,256 single-block encrypt (ECB), returns 16 bytes.
-
 from .key_expansion_func_enhanced import key_expansion, get_round_key, add_round_key,key_expansion_aglorithmic
 from .helper import __print
 
