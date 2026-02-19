@@ -51,18 +51,17 @@ module invmixcol (
         a_s1 <= a; b_s1 <= b; c_s1 <= c; d_s1 <= d;
     end
 
-
     reg [7:0] aE, aB, aD, a9;
     reg [7:0] bE, bB, bD, b9;
     reg [7:0] cE, cB, cD, c9;
     reg [7:0] dE, dB, dD, d9;
 
     always @(posedge clk) begin
-        // a*
-        aE <= a8 ^ a4 ^ a2;      // 0x0E
-        aB <= a8 ^ a2 ^ a_s1;    // 0x0B
-        aD <= a8 ^ a4 ^ a_s1;    // 0x0D
-        a9 <= a8 ^ a_s1;         // 0x09
+
+        aE <= a8 ^ a4 ^ a2;      
+        aB <= a8 ^ a2 ^ a_s1;   
+        aD <= a8 ^ a4 ^ a_s1;    
+        a9 <= a8 ^ a_s1;         
 
         bE <= b8 ^ b4 ^ b2;
         bB <= b8 ^ b2 ^ b_s1;
