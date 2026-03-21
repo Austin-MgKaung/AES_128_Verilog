@@ -12,9 +12,8 @@ module aes_uart_top #(
     output wire uart_tx
 );
 
-    // =========================================================
     // UART RX/TX signals
-    // =========================================================
+    
     wire [7:0] rx_data;
     wire       rx_valid;
 
@@ -22,19 +21,16 @@ module aes_uart_top #(
     reg        tx_start;
     wire       tx_busy;
 
-    // =========================================================
     // AES interface
-    // Replace the dummy AES section with your real AES core
-    // =========================================================
+    
     reg         aes_start;
     reg  [127:0] aes_key;
     reg  [127:0] aes_din;
     wire [127:0] aes_dout;
     wire        aes_done;
 
-    // =========================================================
     // Hex decode/encode
-    // =========================================================
+    
     wire [3:0] rx_nibble;
     wire       rx_hex_valid;
 
@@ -54,9 +50,8 @@ module aes_uart_top #(
         .ascii (tx_ascii_wire)
     );
 
-    // =========================================================
     // UART instances
-    // =========================================================
+    
     uart_rx #(
         .CLK_FREQ(CLK_FREQ),
         .BAUD(BAUD)
@@ -80,23 +75,8 @@ module aes_uart_top #(
         .busy(tx_busy)
     );
 
-    // =========================================================
-    // REAL AES CORE GOES HERE
-    // =========================================================
-    // Replace this dummy module instance with your AES module.
-    // Example:
-    //
-    // aes_core u_aes (
-    //     .clk(clk),
-    //     .rst(rst),
-    //     .start(aes_start),
-    //     .key(aes_key),
-    //     .block_in(aes_din),
-    //     .block_out(aes_dout),
-    //     .done(aes_done)
-    // );
-    //
-    // For now, dummy AES echoes key ^ data after a delay.
+    // AES CORE
+
 aes128_top u_aes (
     .clk(clk),
     .rst(rst),
@@ -107,10 +87,8 @@ aes128_top u_aes (
     .done(aes_done)
 );
 
-
-    // =========================================================
     // Wrapper FSM
-    // =========================================================
+    
     localparam S_IDLE        = 4'd0;
     localparam S_GET_KEY     = 4'd1;
     localparam S_WAIT_D      = 4'd2;
@@ -146,9 +124,8 @@ aes128_top u_aes (
 
             case (state)
 
-                // ---------------------------------------------
                 // Wait for 'K'
-                // ---------------------------------------------
+            
                 S_IDLE: begin
                     nibble_count <= 6'd0;
                     shift_reg    <= 128'd0;
@@ -160,9 +137,8 @@ aes128_top u_aes (
                     end
                 end
 
-                // ---------------------------------------------
                 // Get 32 hex chars for key
-                // ---------------------------------------------
+                
                 S_GET_KEY: begin
                     if (rx_valid) begin
                         if (rx_data == 8'h0D || rx_data == 8'h0A) begin
@@ -181,9 +157,8 @@ aes128_top u_aes (
                     end
                 end
 
-                // ---------------------------------------------
                 // Wait for 'D'
-                // ---------------------------------------------
+                
                 S_WAIT_D: begin
                     if (rx_valid) begin
                         if (rx_data == "D" || rx_data == "d") begin
@@ -192,9 +167,8 @@ aes128_top u_aes (
                     end
                 end
 
-                // ---------------------------------------------
                 // Get 32 hex chars for plaintext
-                // ---------------------------------------------
+                
                 S_GET_DATA: begin
                     if (rx_valid) begin
                         if (rx_data == 8'h0D || rx_data == 8'h0A) begin
@@ -212,17 +186,15 @@ aes128_top u_aes (
                     end
                 end
 
-                // ---------------------------------------------
                 // Pulse AES start
-                // ---------------------------------------------
+                
                 S_START_AES: begin
                     aes_start <= 1'b1;
                     state     <= S_WAIT_AES;
                 end
 
-                // ---------------------------------------------
                 // Wait for AES done
-                // ---------------------------------------------
+                
                 S_WAIT_AES: begin
                     if (aes_done) begin
                         out_reg   <= aes_dout;
@@ -231,9 +203,8 @@ aes128_top u_aes (
                     end
                 end
 
-                // ---------------------------------------------
                 // Send 'C'
-                // ---------------------------------------------
+                
                 S_SEND_C: begin
                     if (!tx_busy) begin
                         tx_data  <= "C";
@@ -242,9 +213,8 @@ aes128_top u_aes (
                     end
                 end
 
-                // ---------------------------------------------
                 // Send 32 hex chars
-                // ---------------------------------------------
+                
                 S_SEND_HEX: begin
                     if (!tx_busy) begin
                         tx_data  <= tx_ascii_wire;
@@ -257,9 +227,8 @@ aes128_top u_aes (
                     end
                 end
 
-                // ---------------------------------------------
                 // Send CR
-                // ---------------------------------------------
+                
                 S_SEND_CR: begin
                     if (!tx_busy) begin
                         tx_data  <= 8'h0D;
@@ -268,9 +237,8 @@ aes128_top u_aes (
                     end
                 end
 
-                // ---------------------------------------------
                 // Send LF, then go back
-                // ---------------------------------------------
+                
                 S_SEND_LF: begin
                     if (!tx_busy) begin
                         tx_data  <= 8'h0A;
@@ -288,10 +256,8 @@ aes128_top u_aes (
 
 endmodule
 
-// ============================================================
 // UART Receiver
-// 8N1
-// ============================================================
+
 module uart_rx #(
     parameter CLK_FREQ = 100_000_000,
     parameter BAUD     = 115200
@@ -384,10 +350,8 @@ module uart_rx #(
     end
 endmodule
 
-// ============================================================
 // UART Transmitter
-// 8N1
-// ============================================================
+
 module uart_tx #(
     parameter CLK_FREQ = 100_000_000,
     parameter BAUD     = 115200
@@ -483,9 +447,8 @@ module uart_tx #(
     end
 endmodule
 
-// ============================================================
 // ASCII hex -> nibble
-// ============================================================
+
 module hex_to_nibble(
     input  wire [7:0] ascii,
     output reg  [3:0] nibble,
@@ -518,9 +481,8 @@ module hex_to_nibble(
     end
 endmodule
 
-// ============================================================
 // nibble -> ASCII hex
-// ============================================================
+
 module nibble_to_hex(
     input  wire [3:0] nibble,
     output reg  [7:0] ascii
