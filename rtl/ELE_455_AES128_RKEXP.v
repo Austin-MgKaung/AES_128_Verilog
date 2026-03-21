@@ -22,17 +22,15 @@
 
 module ELE_455_AES128_RKEXP(
 
-    input CLK,
+    input clk,
     input [3:0] round,
-    input [127:0] key_i,
-    output wire [127:0] key
+    input [127:0] key_in,
+    output wire [127:0] key_out
 
     );
     
     reg [7:0] RCON [0:9];
-   
     wire [7:0] s_out0_w, s_out1_w, s_out2_w, s_out3_w;
-    
     reg [7:0] RCON_o; // Simple reg, NOT an array
 
     // 1. ROBUST RCON (Combinational Case Statement)
@@ -54,26 +52,11 @@ module ELE_455_AES128_RKEXP(
     end
     
     
-    ELE_455_AES128_SBOX sbox1 (
-            .in_byte(key_i[23:16]),
-            .out_byte(s_out0_w)
-        );
-        
-    ELE_455_AES128_SBOX sbox2 (
-            .in_byte(key_i[15:8]),   
-            .out_byte(s_out1_w)
-        );
-        
-    ELE_455_AES128_SBOX sbox3 (
-            .in_byte(key_i[7:0]),   
-            .out_byte(s_out2_w)
-        );
-        
-    ELE_455_AES128_SBOX sbox4 (
-            .in_byte(key_i[31:24]),  
-            .out_byte(s_out3_w)
-        );
+    ELE_455_AES128_SBOX sbox1 (.in_byte(key_in[23:16]),.out_byte(s_out0_w));        
+    ELE_455_AES128_SBOX sbox2 (.in_byte(key_in[15:8]),.out_byte(s_out1_w));       
+    ELE_455_AES128_SBOX sbox3 (.in_byte(key_in[7:0]),.out_byte(s_out2_w));      
+    ELE_455_AES128_SBOX sbox4 (.in_byte(key_in[31:24]),.out_byte(s_out3_w));
 
-    assign key = {{s_out0_w ^ RCON_o, s_out1_w, s_out2_w, s_out3_w} ^ key_i[127:96], {s_out0_w ^ RCON_o, s_out1_w, s_out2_w, s_out3_w} ^ key_i[127:96] ^ key_i[95:64], {s_out0_w ^ RCON_o, s_out1_w, s_out2_w, s_out3_w} ^ key_i[127:96] ^ key_i[95:64] ^ key_i[63:32], {s_out0_w ^ RCON_o, s_out1_w, s_out2_w, s_out3_w} ^ key_i[127:96] ^ key_i[95:64] ^ key_i[63:32] ^ key_i[31:0]};
+    assign key_out = {{s_out0_w ^ RCON_o, s_out1_w, s_out2_w, s_out3_w} ^ key_in[127:96], {s_out0_w ^ RCON_o, s_out1_w, s_out2_w, s_out3_w} ^ key_in[127:96] ^ key_in[95:64], {s_out0_w ^ RCON_o, s_out1_w, s_out2_w, s_out3_w} ^ key_in[127:96] ^ key_in[95:64] ^ key_in[63:32], {s_out0_w ^ RCON_o, s_out1_w, s_out2_w, s_out3_w} ^ key_in[127:96] ^ key_in[95:64] ^ key_in[63:32] ^ key_in[31:0]};
    
 endmodule
