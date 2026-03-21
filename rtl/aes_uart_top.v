@@ -1,4 +1,5 @@
 // Wrapper module to allow serial communication
+// Wrapper module to allow serial communication
 
 `timescale 1ns / 1ps
 
@@ -13,7 +14,6 @@ module aes_uart_top #(
 );
 
     // UART RX/TX signals
-    
     wire [7:0] rx_data;
     wire       rx_valid;
 
@@ -22,15 +22,12 @@ module aes_uart_top #(
     wire       tx_busy;
 
     // AES interface
-    
     reg         aes_start;
-    reg  [127:0] aes_key;
     reg  [127:0] aes_din;
     wire [127:0] aes_dout;
     wire        aes_done;
 
     // Hex decode/encode
-    
     wire [3:0] rx_nibble;
     wire       rx_hex_valid;
 
@@ -51,7 +48,6 @@ module aes_uart_top #(
     );
 
     // UART instances
-    
     uart_rx #(
         .CLK_FREQ(CLK_FREQ),
         .BAUD(BAUD)
@@ -76,31 +72,27 @@ module aes_uart_top #(
     );
 
     // AES CORE
-
-aes128_top u_aes (
-    .clk(clk),
-    .rst(rst),
-    .start(aes_start),
-    .key(aes_key),
-    .block_in(aes_din),
-    .block_out(aes_dout),
-    .done(aes_done)
-);
+    aes128_top u_aes (
+        .clk(clk),
+        .rst(rst),
+        .start(aes_start),
+        .key(128'd0),        // unused by your modified aes128_top
+        .block_in(aes_din),
+        .block_out(aes_dout),
+        .done(aes_done)
+    );
 
     // Wrapper FSM
-    
-    localparam S_IDLE        = 4'd0;
-    localparam S_GET_KEY     = 4'd1;
-    localparam S_WAIT_D      = 4'd2;
-    localparam S_GET_DATA    = 4'd3;
-    localparam S_START_AES   = 4'd4;
-    localparam S_WAIT_AES    = 4'd5;
-    localparam S_SEND_C      = 4'd6;
-    localparam S_SEND_HEX    = 4'd7;
-    localparam S_SEND_CR     = 4'd8;
-    localparam S_SEND_LF     = 4'd9;
+    localparam S_IDLE      = 3'd0;
+    localparam S_GET_DATA  = 3'd1;
+    localparam S_START_AES = 3'd2;
+    localparam S_WAIT_AES  = 3'd3;
+    localparam S_SEND_C    = 3'd4;
+    localparam S_SEND_HEX  = 3'd5;
+    localparam S_SEND_CR   = 3'd6;
+    localparam S_SEND_LF   = 3'd7;
 
-    reg [3:0]   state;
+    reg [2:0]   state;
     reg [5:0]   nibble_count;
     reg [127:0] shift_reg;
     reg [127:0] out_reg;
@@ -114,7 +106,6 @@ aes128_top u_aes (
             out_reg      <= 128'd0;
             tx_count     <= 6'd0;
             aes_start    <= 1'b0;
-            aes_key      <= 128'd0;
             aes_din      <= 128'd0;
             tx_data      <= 8'd0;
             tx_start     <= 1'b0;
@@ -124,42 +115,11 @@ aes128_top u_aes (
 
             case (state)
 
-                // Wait for 'K'
-            
+                // Wait for 'D'
                 S_IDLE: begin
                     nibble_count <= 6'd0;
                     shift_reg    <= 128'd0;
 
-                    if (rx_valid) begin
-                        if (rx_data == "K" || rx_data == "k") begin
-                            state <= S_GET_KEY;
-                        end
-                    end
-                end
-
-                // Get 32 hex chars for key
-                
-                S_GET_KEY: begin
-                    if (rx_valid) begin
-                        if (rx_data == 8'h0D || rx_data == 8'h0A) begin
-                            // ignore CR/LF
-                        end else if (rx_hex_valid) begin
-                            shift_reg    <= {shift_reg[123:0], rx_nibble};
-                            nibble_count <= nibble_count + 1'b1;
-
-                            if (nibble_count == 6'd31) begin
-                                aes_key      <= {shift_reg[123:0], rx_nibble};
-                                nibble_count <= 6'd0;
-                                shift_reg    <= 128'd0;
-                                state        <= S_WAIT_D;
-                            end
-                        end
-                    end
-                end
-
-                // Wait for 'D'
-                
-                S_WAIT_D: begin
                     if (rx_valid) begin
                         if (rx_data == "D" || rx_data == "d") begin
                             state <= S_GET_DATA;
@@ -168,7 +128,6 @@ aes128_top u_aes (
                 end
 
                 // Get 32 hex chars for plaintext
-                
                 S_GET_DATA: begin
                     if (rx_valid) begin
                         if (rx_data == 8'h0D || rx_data == 8'h0A) begin
@@ -180,6 +139,7 @@ aes128_top u_aes (
                             if (nibble_count == 6'd31) begin
                                 aes_din      <= {shift_reg[123:0], rx_nibble};
                                 nibble_count <= 6'd0;
+                                shift_reg    <= 128'd0;
                                 state        <= S_START_AES;
                             end
                         end
@@ -187,24 +147,21 @@ aes128_top u_aes (
                 end
 
                 // Pulse AES start
-                
                 S_START_AES: begin
                     aes_start <= 1'b1;
                     state     <= S_WAIT_AES;
                 end
 
                 // Wait for AES done
-                
                 S_WAIT_AES: begin
                     if (aes_done) begin
-                        out_reg   <= aes_dout;
-                        tx_count  <= 6'd0;
-                        state     <= S_SEND_C;
+                        out_reg  <= aes_dout;
+                        tx_count <= 6'd0;
+                        state    <= S_SEND_C;
                     end
                 end
 
                 // Send 'C'
-                
                 S_SEND_C: begin
                     if (!tx_busy) begin
                         tx_data  <= "C";
@@ -214,7 +171,6 @@ aes128_top u_aes (
                 end
 
                 // Send 32 hex chars
-                
                 S_SEND_HEX: begin
                     if (!tx_busy) begin
                         tx_data  <= tx_ascii_wire;
@@ -228,7 +184,6 @@ aes128_top u_aes (
                 end
 
                 // Send CR
-                
                 S_SEND_CR: begin
                     if (!tx_busy) begin
                         tx_data  <= 8'h0D;
@@ -238,7 +193,6 @@ aes128_top u_aes (
                 end
 
                 // Send LF, then go back
-                
                 S_SEND_LF: begin
                     if (!tx_busy) begin
                         tx_data  <= 8'h0A;
