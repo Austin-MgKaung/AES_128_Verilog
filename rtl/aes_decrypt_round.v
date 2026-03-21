@@ -1,24 +1,23 @@
 `timescale 1ns/1ps
 
 module aes_decrypt_round(
-    input  wire         clk,
-    input  wire [127:0]  decrypt_i,
-    input  wire [127:0]  key,
-    output reg  [127:0]  decrypt_o
+    input clk,
+    input [3:0] round,
+    input [127:0] decrypt_i,
+    input [127:0] key_in,
+    output reg [127:0] decrypt_o,
+    output reg [127:0] key_out
+    
 );
 
     wire [127:0] inv_shift_o;
     wire [127:0] inv_s_out;
     wire [127:0] addkey_out;
-
+    wire [127:0] next_key;
     wire [31:0] inv_mixcols0_o, inv_mixcols1_o, inv_mixcols2_o, inv_mixcols3_o;
     wire [127:0] inv_mix_out;
 
-    invshift invshiftrows(
-        .state_in (decrypt_i),
-        .state_out(inv_shift_o)
-    );
-
+    invshift invshiftrows(.state_in(decrypt_i), .state_out(inv_shift_o));
 
     invsubbytes s0  (.in_byte(inv_shift_o[127:120]), .out_byte(inv_s_out[127:120]));
     invsubbytes s1  (.in_byte(inv_shift_o[119:112]), .out_byte(inv_s_out[119:112]));
@@ -36,8 +35,10 @@ module aes_decrypt_round(
     invsubbytes s13 (.in_byte(inv_shift_o[23 :16 ]), .out_byte(inv_s_out[23 :16 ]));
     invsubbytes s14 (.in_byte(inv_shift_o[15 :8  ]), .out_byte(inv_s_out[15 :8  ]));
     invsubbytes s15 (.in_byte(inv_shift_o[7  :0  ]), .out_byte(inv_s_out[7  :0  ]));
+    
+    inv_roundkeycreate rkexp_round (.clk(clk), .round(round), .key_in(key_in), .key_out(next_key));
 
-    assign addkey_out = inv_s_out ^ key;
+    assign addkey_out = inv_s_out ^ next_key;
 
     invmixcol invmixcols0(.col_in(addkey_out[31:0]),    .col_out(inv_mixcols0_o));
     invmixcol invmixcols1(.col_in(addkey_out[63:32]),   .col_out(inv_mixcols1_o));
@@ -48,6 +49,7 @@ module aes_decrypt_round(
 
     always @(posedge clk) begin
         decrypt_o <= inv_mix_out;
+        key_out   <= next_key;
     end
 
 endmodule
