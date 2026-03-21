@@ -1,4 +1,4 @@
-// Uses LFSR for Key and user input for PT
+// Uses LFSR for a new Key every time and user input for PT
 
 `timescale 1ns/1ps
 
