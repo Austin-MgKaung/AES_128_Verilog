@@ -6,7 +6,7 @@
       input  wire [7:0] in_byte,
       output wire [7:0] out_byte
   );
-      reg [7:0] rom [0:255];
+      reg [7:0] rom [255:0];
 
       initial begin
           rom[8'h00]=8'h63; rom[8'h01]=8'h7c; rom[8'h02]=8'h77; rom[8'h03]=8'h7b;
@@ -79,5 +79,3 @@
 
   endmodule
   `default_nettype wire
-  
-  

@@ -59,7 +59,7 @@ module tb_aes128_top;
     //   then check decrypted_text == in_pt and (optionally) cipher_text == exp_ct.
     //   Pass check_ct = 0 to skip the ciphertext check.
     // =========================================================================
-    task run_one_test;
+    task automatic run_one_test;
         input [127:0] in_key;
         input [127:0] in_pt;
         input [127:0] exp_ct;   // set to 0 to skip ciphertext check

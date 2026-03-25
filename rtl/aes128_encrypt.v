@@ -13,7 +13,7 @@
       // ----------------------------------------------------------------
       // FSM states
       // ----------------------------------------------------------------
-      localparam IDLE = 1'd0, BUSY = 1'd1;
+      localparam logic IDLE = 1'd0, BUSY = 1'd1;
       reg state;
       reg [3:0] lat;
       reg donereg;
@@ -62,16 +62,36 @@
       // Rounds 2-9 = normal rounds
       // Round 10   = final round (no MixColumns)
       // ----------------------------------------------------------------
-      aes_enc_round       r1  (.clk(clk),.state_in(stage0 ^ key0),.round_key(rk1r), .state_out(st1));
-      aes_enc_round       r2  (.clk(clk),.state_in(st1),          .round_key(rk2r), .state_out(st2));
-      aes_enc_round       r3  (.clk(clk),.state_in(st2),          .round_key(rk3r), .state_out(st3));
-      aes_enc_round       r4  (.clk(clk),.state_in(st3),          .round_key(rk4r), .state_out(st4));
-      aes_enc_round       r5  (.clk(clk),.state_in(st4),          .round_key(rk5r), .state_out(st5));
-      aes_enc_round       r6  (.clk(clk),.state_in(st5),          .round_key(rk6r), .state_out(st6));
-      aes_enc_round       r7  (.clk(clk),.state_in(st6),          .round_key(rk7r), .state_out(st7));
-      aes_enc_round       r8  (.clk(clk),.state_in(st7),          .round_key(rk8r), .state_out(st8));
-      aes_enc_round       r9  (.clk(clk),.state_in(st8),          .round_key(rk9r), .state_out(st9));
-      aes_enc_round_final r10 (.clk(clk),.state_in(st9),          .round_key(rk10r),.state_out(st10));
+      aes_enc_round r1 (
+          .clk(clk), .state_in(stage0 ^ key0), .round_key(rk1r), .state_out(st1)
+      );
+      aes_enc_round r2 (
+          .clk(clk), .state_in(st1), .round_key(rk2r), .state_out(st2)
+      );
+      aes_enc_round r3 (
+          .clk(clk), .state_in(st2), .round_key(rk3r), .state_out(st3)
+      );
+      aes_enc_round r4 (
+          .clk(clk), .state_in(st3), .round_key(rk4r), .state_out(st4)
+      );
+      aes_enc_round r5 (
+          .clk(clk), .state_in(st4), .round_key(rk5r), .state_out(st5)
+      );
+      aes_enc_round r6 (
+          .clk(clk), .state_in(st5), .round_key(rk6r), .state_out(st6)
+      );
+      aes_enc_round r7 (
+          .clk(clk), .state_in(st6), .round_key(rk7r), .state_out(st7)
+      );
+      aes_enc_round r8 (
+          .clk(clk), .state_in(st7), .round_key(rk8r), .state_out(st8)
+      );
+      aes_enc_round r9 (
+          .clk(clk), .state_in(st8), .round_key(rk9r), .state_out(st9)
+      );
+      aes_enc_round_final r10 (
+          .clk(clk), .state_in(st9), .round_key(rk10r), .state_out(st10)
+      );
 
       // ----------------------------------------------------------------
       // FSM + output latch
@@ -130,4 +150,3 @@
 
   endmodule
   `default_nettype wire
-  

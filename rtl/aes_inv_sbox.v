@@ -7,7 +7,7 @@
   );
       reg [7:0] s;
 
-      always @(*) begin
+      always_comb begin
           case (in_byte)
               8'h00:s=8'h52; 8'h01:s=8'h09; 8'h02:s=8'h6a; 8'h03:s=8'hd5;
               8'h04:s=8'h30; 8'h05:s=8'h36; 8'h06:s=8'ha5; 8'h07:s=8'h38;
@@ -81,4 +81,3 @@
 
   endmodule
   `default_nettype wire
-  

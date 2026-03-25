@@ -8,7 +8,7 @@
   );
       wire [7:0] a=col_in[31:24], b=col_in[23:16], c=col_in[15:8], d=col_in[7:0];
 
-      function automatic [7:0] xtime(input [7:0] x);
+      function automatic [7:0] xtime(input logic [7:0] x);
           xtime = {x[6:0],1'b0} ^ (8'h1b & {8{x[7]}});
       endfunction
 
@@ -31,4 +31,3 @@
 
   endmodule
   `default_nettype wire
-  
