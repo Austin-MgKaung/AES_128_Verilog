@@ -463,4 +463,3 @@ module nibble_to_hex(
         endcase
     end
 endmodule
-
