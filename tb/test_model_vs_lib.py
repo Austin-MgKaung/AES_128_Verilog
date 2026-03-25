@@ -9,7 +9,7 @@ import os, random, pytest
 from Cryptodome.Cipher import AES
 
 # Student model under test
-from model.aes128 import encrypt_block_aglorithmic,encrypt_block_LUTS,decrypt_block_aglorithmic,decrypt_block_LUTS
+from model.aes128 import encrypt_block,decrypt_block
 
 # NIST FIPS-197 AES-128 Known Answer Test (KAT)
 # key = 000102...0f, pt = 001122...ff
@@ -29,12 +29,11 @@ def test_kat_library_encrypt():
 def test_model_matches_library_kat_encrypt():
     """Compare  model to library on the KAT."""
     try:
-        got_1 = encrypt_block_aglorithmic(KAT_KEY_128, KAT_PT)
-        got_2 = encrypt_block_LUTS(KAT_KEY_128, KAT_PT)
+        got_1 = encrypt_block(KAT_KEY_128, KAT_PT)
+    
     except NotImplementedError:
         pytest.skip(" model not implemented yet")
     assert got_1 == KAT_CT_128, f"Model KAT mismatch: got {got_1.hex()}, exp {KAT_CT_128.hex()}"
-    assert got_2 == KAT_CT_128, f"Model KAT mismatch: got {got_2.hex()}, exp {KAT_CT_128.hex()}"
     
 
 
@@ -42,8 +41,7 @@ def test_model_matches_library_random_encrypt(n=100):
     """Random vectors: model vs library (runs only if model implemented)."""
     try:
          # ensure import ok
-        _ = encrypt_block_aglorithmic
-        _ = encrypt_block_LUTS
+        _ = encrypt_block
     except Exception:
         pytest.skip("model import failed")
 
@@ -56,13 +54,11 @@ def test_model_matches_library_random_encrypt(n=100):
             exp_128 = lib_encrypt_block(key_128, pt)
             
             try:
-                got_1 = encrypt_block_aglorithmic(key_128, pt)
-                got_2 = encrypt_block_LUTS(key_128, pt)
+                got_1 = encrypt_block(key_128, pt)
                 
             except NotImplementedError:
                 pytest.skip("Student model not implemented yet")
             assert got_1 == exp_128, f"Mismatch\nKEY={key_128.hex()}\nPT ={pt.hex()}\nEXP={exp_128.hex()}\nGOT={got_1.hex()}"
-            assert got_2 == exp_128, f"Mismatch\nKEY={key_128.hex()}\nPT ={pt.hex()}\nEXP={exp_128.hex()}\nGOT={got_2.hex()}"
         
     except NotImplementedError:
         pytest.skip("Student model not implemented yet") 
@@ -79,8 +75,7 @@ def test_kat_library_decrypt():
 def test_model_matches_library_kat_decrypt():
     """Compare our model to library on the KAT."""
     try:
-        got_1 = decrypt_block_aglorithmic(KAT_KEY_128, KAT_CT_128)
-        got_2 = decrypt_block_LUTS(KAT_KEY_128, KAT_CT_128)
+        got_1 = decrypt_block(KAT_KEY_128, KAT_CT_128)
        
 
     except NameError:
@@ -89,7 +84,7 @@ def test_model_matches_library_kat_decrypt():
         pytest.skip("Our 'decrypt_block' not implemented yet")
 
     assert got_1 == KAT_PT, f"Model KAT mismatch: got {got_1.hex()}, exp {KAT_PT.hex()}"
-    assert got_2 == KAT_PT, f"Model KAT mismatch: got {got_2.hex()}, exp {KAT_PT.hex()}"
+    
   
 
 def test_model_matches_library_random_decrypt(n=100):
@@ -101,8 +96,7 @@ def test_model_matches_library_random_decrypt(n=100):
     """
     try:
         # Check that the function exists before looping
-        _ = decrypt_block_aglorithmic
-        _ = decrypt_block_LUTS
+        _ = decrypt_block
 
     except NameError:
         pytest.skip("'decrypt_block' function not found or not imported")
@@ -124,8 +118,8 @@ def test_model_matches_library_random_decrypt(n=100):
             
             # Decrypt with our decrypt  model
             try:
-                got_1 = decrypt_block_aglorithmic(key_128, ct_1)
-                got_2 = decrypt_block_LUTS(key_128, ct_1)
+                got_1 = decrypt_block(key_128, ct_1)
+                
                 
                 
             except NotImplementedError:
@@ -133,8 +127,7 @@ def test_model_matches_library_random_decrypt(n=100):
                 
             # Assert original plaintext equals decrypted text
             assert got_1 == pt, f"Round-trip Mismatch\nKEY={key_128.hex()}\nPT ={pt.hex()}\nCT ={ct_1.hex()}\nGOT={got_1.hex()}"
-            assert got_2 == pt, f"Round-trip Mismatch\nKEY={key_128.hex()}\nPT ={pt.hex()}\nCT ={ct_1.hex()}\nGOT={got_2.hex()}"
-            
+           
             
     except NotImplementedError:
         pytest.skip("'decrypt_block' not implemented yet")
