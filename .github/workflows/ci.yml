@@ -112,14 +112,22 @@ jobs:
           python -m pip install --upgrade pip wheel
           pip install -r requirements.txt
 
-      - name: Run RTL tests (test_aes via test_build_aes.py)
+      - name: Run RTL encrypt tests (test_aes via test_build_aes.py)
         run: |
           mkdir -p build
           python -m pytest -vv -rA tb/test_build_aes.py
 
-      - name: Run scoreboard/coverage tests (test_aes_scoreboard via test_build_aes_scoreboard.py)
+      - name: Run RTL decrypt tests (test_aes_decrypt via test_build_aes_decrypt.py)
+        run: |
+          python -m pytest -vv -rA tb/test_build_aes_decrypt.py
+
+      - name: Run encrypt scoreboard/coverage tests (test_build_aes_scoreboard.py)
         run: |
           python -m pytest -vv -rA tb/test_build_aes_scoreboard.py
+
+      - name: Run decrypt scoreboard/coverage tests (test_build_aes_scoreboard_decrypt.py)
+        run: |
+          python -m pytest -vv -rA tb/test_build_aes_scoreboard_decrypt.py
 
       - name: Collect Verilator coverage (lcov)
         if: always()
