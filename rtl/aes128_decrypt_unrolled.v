@@ -2,142 +2,182 @@
 `default_nettype none
 
 // =====================================================================
-// AES-128 Unrolled Decryption (Friend's Architecture - Modularized)
+// AES-128 Decrypt — Unrolled Modular (stream-fast style)
 // =====================================================================
 //
-// ARCHITECTURE:
-//   - All 10 decryption rounds fully unrolled as separate pipeline stages
-//   - Each round is 2 stages: (InvSubBytes | InvShiftRows) then (AddRoundKey | InvMixColumns)
-//   - Total latency: 20 cycles
-//   - Throughput: 1 block per cycle after warmup
+// Architecture matches throughput-stream-fast (decrypt) but keeps every
+// pipeline stage explicitly visible in this top-level module.
 //
-// KEY ORDER:
-//   Initial AddRoundKey: rk10 (last expanded key)
-//   Rounds 9 down to 1:   rk9r ... rk1r
-//   Final round (r0):     key0 (original master key)
+// STAGE SPLIT per round (same as aes_dec_round_fast):
+//   Stage 1: InvShiftRows + InvSubBytes (GF arithmetic, no ROM) → register
+//   Stage 2: AddRoundKey + InvMixColumns                         → register
+//
+// Round 0 (final): Stage 2 has no InvMixColumns.
+//
+// KEY ORDER (AES decrypt reverses key schedule):
+//   Initial AddRoundKey : rk10 (last expanded key)
+//   Rounds 9 down to 1  : rk9r ... rk1r
+//   Final round 0       : key_reg (original master key)
+//
+// PIPELINE:
+//   Initial AddRoundKey : combinational (0 cycles)
+//   Rounds 9-1          : 2 pipeline registers each (18 cycles)
+//   Round 0             : 2 pipeline registers       (2 cycles)
+//   Total latency       : 20 cycles
+//
+// CONTROL: 20-bit valid shift register — II = 1 cycle
+// INTERFACE: valid_in / valid_out  (matches stream-fast)
 // =====================================================================
 
 module aes128_decrypt_unrolled (
     input  wire         clk,
     input  wire         rst,
-    input  wire         start,       // 1-cycle pulse when data ready
+    input  wire         valid_in,
     input  wire [127:0] key,
     input  wire [127:0] block_in,
-    output wire         done,        // 1-cycle pulse when block_out valid (20 cycles later)
+    output wire         valid_out,
     output wire [127:0] block_out
 );
 
-    // ================================================================
-    // KEY EXPANSION CHAIN (same as encryption)
-    // ================================================================
+    // ------------------------------------------------------------------
+    // Key expansion chain
+    // ------------------------------------------------------------------
     reg  [127:0] key_reg;
-    wire [127:0] rk0 = key_reg;      // Round key 0 (initial key)
-    wire [127:0] rk1, rk2, rk3, rk4, rk5, rk6, rk7, rk8, rk9, rk10;
-    
-    reg  [127:0] rk1r, rk2r, rk3r, rk4r, rk5r, rk6r, rk7r, rk8r, rk9r, rk10r;
-    
-    // Key expansion stages (combinational, then registered)
+    always @(posedge clk) key_reg <= key;
+
+    wire [127:0] rk1,  rk2,  rk3,  rk4,  rk5;
+    wire [127:0] rk6,  rk7,  rk8,  rk9,  rk10;
+    reg  [127:0] rk1r, rk2r, rk3r, rk4r, rk5r;
+    reg  [127:0] rk6r, rk7r, rk8r, rk9r, rk10r;
+
     aes_key_exp ke1  (.clk(clk), .round(4'd1),  .key_in(key_reg), .key_out(rk1));
-    aes_key_exp ke2  (.clk(clk), .round(4'd2),  .key_in(rk1r),    .key_out(rk2));
-    aes_key_exp ke3  (.clk(clk), .round(4'd3),  .key_in(rk2r),    .key_out(rk3));
-    aes_key_exp ke4  (.clk(clk), .round(4'd4),  .key_in(rk3r),    .key_out(rk4));
-    aes_key_exp ke5  (.clk(clk), .round(4'd5),  .key_in(rk4r),    .key_out(rk5));
-    aes_key_exp ke6  (.clk(clk), .round(4'd6),  .key_in(rk5r),    .key_out(rk6));
-    aes_key_exp ke7  (.clk(clk), .round(4'd7),  .key_in(rk6r),    .key_out(rk7));
-    aes_key_exp ke8  (.clk(clk), .round(4'd8),  .key_in(rk7r),    .key_out(rk8));
-    aes_key_exp ke9  (.clk(clk), .round(4'd9),  .key_in(rk8r),    .key_out(rk9));
-    aes_key_exp ke10 (.clk(clk), .round(4'd10), .key_in(rk9r),    .key_out(rk10));
-    
+    aes_key_exp ke2  (.clk(clk), .round(4'd2),  .key_in(rk1r),   .key_out(rk2));
+    aes_key_exp ke3  (.clk(clk), .round(4'd3),  .key_in(rk2r),   .key_out(rk3));
+    aes_key_exp ke4  (.clk(clk), .round(4'd4),  .key_in(rk3r),   .key_out(rk4));
+    aes_key_exp ke5  (.clk(clk), .round(4'd5),  .key_in(rk4r),   .key_out(rk5));
+    aes_key_exp ke6  (.clk(clk), .round(4'd6),  .key_in(rk5r),   .key_out(rk6));
+    aes_key_exp ke7  (.clk(clk), .round(4'd7),  .key_in(rk6r),   .key_out(rk7));
+    aes_key_exp ke8  (.clk(clk), .round(4'd8),  .key_in(rk7r),   .key_out(rk8));
+    aes_key_exp ke9  (.clk(clk), .round(4'd9),  .key_in(rk8r),   .key_out(rk9));
+    aes_key_exp ke10 (.clk(clk), .round(4'd10), .key_in(rk9r),   .key_out(rk10));
+
     always @(posedge clk) begin
-        key_reg <= key;
-        rk1r <= rk1;   rk2r <= rk2;   rk3r <= rk3;
-        rk4r <= rk4;   rk5r <= rk5;   rk6r <= rk6;
-        rk7r <= rk7;   rk8r <= rk8;   rk9r <= rk9;
+        rk1r  <= rk1;  rk2r  <= rk2;  rk3r  <= rk3;
+        rk4r  <= rk4;  rk5r  <= rk5;  rk6r  <= rk6;
+        rk7r  <= rk7;  rk8r  <= rk8;  rk9r  <= rk9;
         rk10r <= rk10;
     end
-    
-    // ================================================================
-    // DATA PIPELINE: 20 stages (10 rounds × 2 stages per round)
-    // DECRYPTION: Keys used in REVERSE order (rk10 first, key0 last)
-    // ================================================================
-    
-    // Stage 0: Initial AddRoundKey with rk10
-    wire [127:0] stage0;
-    aes_add_round_key ark_init (.state_in(block_in), .round_key(rk10r), .state_out(stage0));
-    
-    // Round 9: InvSubBytes | InvShiftRows (Stage 1) → AddRoundKey | InvMixColumns (Stage 2)
-    wire [127:0] stage1_isb;
-    aes_inv_subbytes_unrolled isb1 (.state_in(stage0), .state_out(stage1_isb));
-    
-    wire [127:0] stage1_isr;
-    aes_inv_shift_rows isr1 (.state_in(stage1_isb), .state_out(stage1_isr));
-    
-    reg [127:0] stage1_reg;
-    always @(posedge clk) stage1_reg <= stage1_isr;
-    
-    wire [127:0] stage2_ark;
-    aes_add_round_key ark1 (.state_in(stage1_reg), .round_key(rk9r), .state_out(stage2_ark));
-    
-    wire [127:0] stage2;
-    aes_inv_mix_columns_full imc1 (.state_in(stage2_ark), .state_out(stage2));
-    
-    reg [127:0] stage2_reg;
-    always @(posedge clk) stage2_reg <= stage2;
-    
-    // Round 8: InvSubBytes | InvShiftRows (Stage 3) → AddRoundKey | InvMixColumns (Stage 4)
-    wire [127:0] stage3_isb;
-    aes_inv_subbytes_unrolled isb2 (.state_in(stage2_reg), .state_out(stage3_isb));
-    
-    wire [127:0] stage3_isr;
-    aes_inv_shift_rows isr2 (.state_in(stage3_isb), .state_out(stage3_isr));
-    
-    reg [127:0] stage3_reg;
-    always @(posedge clk) stage3_reg <= stage3_isr;
-    
-    wire [127:0] stage4_ark;
-    aes_add_round_key ark2 (.state_in(stage3_reg), .round_key(rk8r), .state_out(stage4_ark));
-    
-    wire [127:0] stage4;
-    aes_inv_mix_columns_full imc2 (.state_in(stage4_ark), .state_out(stage4));
-    
-    reg [127:0] stage4_reg;
-    always @(posedge clk) stage4_reg <= stage4;
-    
-    // Rounds 7-1 (abbreviated for brevity - same pattern repeats)
-    // PLACEHOLDER: Generate remaining 8 rounds
-    
-    // Round 1 (final round - no InvMixColumns)
-    wire [127:0] stage20_isb;
-    aes_inv_subbytes_unrolled isb10 (.state_in(stage4_reg), .state_out(stage20_isb));
-    
-    wire [127:0] stage20_isr;
-    aes_inv_shift_rows isr10 (.state_in(stage20_isb), .state_out(stage20_isr));
-    
-    reg [127:0] stage20_reg;
-    always @(posedge clk) stage20_reg <= stage20_isr;
-    
-    wire [127:0] final_out;
-    aes_add_round_key ark_final (.state_in(stage20_reg), .round_key(rk0), .state_out(final_out));
-    
-    // Register final output
-    reg [127:0] final_reg;
-    always @(posedge clk) final_reg <= final_out;
-    
-    assign block_out = final_reg;
-    
-    // ================================================================
-    // VALID PIPELINE: 20-bit shift register
-    // ================================================================
+
+    // ------------------------------------------------------------------
+    // Initial AddRoundKey with rk10 (combinational — no register)
+    // ------------------------------------------------------------------
+    wire [127:0] s0;
+    aes_add_round_key ark_init (.state_in(block_in), .round_key(rk10r), .state_out(s0));
+
+    // ------------------------------------------------------------------
+    // Round 9
+    // Stage 1: InvShiftRows + InvSubBytes
+    wire [127:0] s1a_isr; aes_inv_shift_rows        isr1 (.state_in(s0),     .state_out(s1a_isr));
+    wire [127:0] s1a_isb; aes_inv_subbytes_unrolled isb1 (.state_in(s1a_isr),.state_out(s1a_isb));
+    reg  [127:0] s1a;     always @(posedge clk) s1a <= s1a_isb;
+    // Stage 2: AddRoundKey + InvMixColumns
+    wire [127:0] s1b_ak;  aes_add_round_key          ark1 (.state_in(s1a),    .round_key(rk9r), .state_out(s1b_ak));
+    wire [127:0] s1b_imc; aes_inv_mix_columns_full   imc1 (.state_in(s1b_ak), .state_out(s1b_imc));
+    reg  [127:0] s1b;     always @(posedge clk) s1b <= s1b_imc;
+
+    // ------------------------------------------------------------------
+    // Round 8
+    wire [127:0] s2a_isr; aes_inv_shift_rows        isr2 (.state_in(s1b),    .state_out(s2a_isr));
+    wire [127:0] s2a_isb; aes_inv_subbytes_unrolled isb2 (.state_in(s2a_isr),.state_out(s2a_isb));
+    reg  [127:0] s2a;     always @(posedge clk) s2a <= s2a_isb;
+    wire [127:0] s2b_ak;  aes_add_round_key          ark2 (.state_in(s2a),    .round_key(rk8r), .state_out(s2b_ak));
+    wire [127:0] s2b_imc; aes_inv_mix_columns_full   imc2 (.state_in(s2b_ak), .state_out(s2b_imc));
+    reg  [127:0] s2b;     always @(posedge clk) s2b <= s2b_imc;
+
+    // ------------------------------------------------------------------
+    // Round 7
+    wire [127:0] s3a_isr; aes_inv_shift_rows        isr3 (.state_in(s2b),    .state_out(s3a_isr));
+    wire [127:0] s3a_isb; aes_inv_subbytes_unrolled isb3 (.state_in(s3a_isr),.state_out(s3a_isb));
+    reg  [127:0] s3a;     always @(posedge clk) s3a <= s3a_isb;
+    wire [127:0] s3b_ak;  aes_add_round_key          ark3 (.state_in(s3a),    .round_key(rk7r), .state_out(s3b_ak));
+    wire [127:0] s3b_imc; aes_inv_mix_columns_full   imc3 (.state_in(s3b_ak), .state_out(s3b_imc));
+    reg  [127:0] s3b;     always @(posedge clk) s3b <= s3b_imc;
+
+    // ------------------------------------------------------------------
+    // Round 6
+    wire [127:0] s4a_isr; aes_inv_shift_rows        isr4 (.state_in(s3b),    .state_out(s4a_isr));
+    wire [127:0] s4a_isb; aes_inv_subbytes_unrolled isb4 (.state_in(s4a_isr),.state_out(s4a_isb));
+    reg  [127:0] s4a;     always @(posedge clk) s4a <= s4a_isb;
+    wire [127:0] s4b_ak;  aes_add_round_key          ark4 (.state_in(s4a),    .round_key(rk6r), .state_out(s4b_ak));
+    wire [127:0] s4b_imc; aes_inv_mix_columns_full   imc4 (.state_in(s4b_ak), .state_out(s4b_imc));
+    reg  [127:0] s4b;     always @(posedge clk) s4b <= s4b_imc;
+
+    // ------------------------------------------------------------------
+    // Round 5
+    wire [127:0] s5a_isr; aes_inv_shift_rows        isr5 (.state_in(s4b),    .state_out(s5a_isr));
+    wire [127:0] s5a_isb; aes_inv_subbytes_unrolled isb5 (.state_in(s5a_isr),.state_out(s5a_isb));
+    reg  [127:0] s5a;     always @(posedge clk) s5a <= s5a_isb;
+    wire [127:0] s5b_ak;  aes_add_round_key          ark5 (.state_in(s5a),    .round_key(rk5r), .state_out(s5b_ak));
+    wire [127:0] s5b_imc; aes_inv_mix_columns_full   imc5 (.state_in(s5b_ak), .state_out(s5b_imc));
+    reg  [127:0] s5b;     always @(posedge clk) s5b <= s5b_imc;
+
+    // ------------------------------------------------------------------
+    // Round 4
+    wire [127:0] s6a_isr; aes_inv_shift_rows        isr6 (.state_in(s5b),    .state_out(s6a_isr));
+    wire [127:0] s6a_isb; aes_inv_subbytes_unrolled isb6 (.state_in(s6a_isr),.state_out(s6a_isb));
+    reg  [127:0] s6a;     always @(posedge clk) s6a <= s6a_isb;
+    wire [127:0] s6b_ak;  aes_add_round_key          ark6 (.state_in(s6a),    .round_key(rk4r), .state_out(s6b_ak));
+    wire [127:0] s6b_imc; aes_inv_mix_columns_full   imc6 (.state_in(s6b_ak), .state_out(s6b_imc));
+    reg  [127:0] s6b;     always @(posedge clk) s6b <= s6b_imc;
+
+    // ------------------------------------------------------------------
+    // Round 3
+    wire [127:0] s7a_isr; aes_inv_shift_rows        isr7 (.state_in(s6b),    .state_out(s7a_isr));
+    wire [127:0] s7a_isb; aes_inv_subbytes_unrolled isb7 (.state_in(s7a_isr),.state_out(s7a_isb));
+    reg  [127:0] s7a;     always @(posedge clk) s7a <= s7a_isb;
+    wire [127:0] s7b_ak;  aes_add_round_key          ark7 (.state_in(s7a),    .round_key(rk3r), .state_out(s7b_ak));
+    wire [127:0] s7b_imc; aes_inv_mix_columns_full   imc7 (.state_in(s7b_ak), .state_out(s7b_imc));
+    reg  [127:0] s7b;     always @(posedge clk) s7b <= s7b_imc;
+
+    // ------------------------------------------------------------------
+    // Round 2
+    wire [127:0] s8a_isr; aes_inv_shift_rows        isr8 (.state_in(s7b),    .state_out(s8a_isr));
+    wire [127:0] s8a_isb; aes_inv_subbytes_unrolled isb8 (.state_in(s8a_isr),.state_out(s8a_isb));
+    reg  [127:0] s8a;     always @(posedge clk) s8a <= s8a_isb;
+    wire [127:0] s8b_ak;  aes_add_round_key          ark8 (.state_in(s8a),    .round_key(rk2r), .state_out(s8b_ak));
+    wire [127:0] s8b_imc; aes_inv_mix_columns_full   imc8 (.state_in(s8b_ak), .state_out(s8b_imc));
+    reg  [127:0] s8b;     always @(posedge clk) s8b <= s8b_imc;
+
+    // ------------------------------------------------------------------
+    // Round 1
+    wire [127:0] s9a_isr; aes_inv_shift_rows        isr9 (.state_in(s8b),    .state_out(s9a_isr));
+    wire [127:0] s9a_isb; aes_inv_subbytes_unrolled isb9 (.state_in(s9a_isr),.state_out(s9a_isb));
+    reg  [127:0] s9a;     always @(posedge clk) s9a <= s9a_isb;
+    wire [127:0] s9b_ak;  aes_add_round_key          ark9 (.state_in(s9a),    .round_key(rk1r), .state_out(s9b_ak));
+    wire [127:0] s9b_imc; aes_inv_mix_columns_full   imc9 (.state_in(s9b_ak), .state_out(s9b_imc));
+    reg  [127:0] s9b;     always @(posedge clk) s9b <= s9b_imc;
+
+    // ------------------------------------------------------------------
+    // Round 0 (final — no InvMixColumns)
+    // Stage 1: InvShiftRows + InvSubBytes
+    wire [127:0] s10a_isr; aes_inv_shift_rows        isr10 (.state_in(s9b),     .state_out(s10a_isr));
+    wire [127:0] s10a_isb; aes_inv_subbytes_unrolled isb10 (.state_in(s10a_isr),.state_out(s10a_isb));
+    reg  [127:0] s10a;     always @(posedge clk) s10a <= s10a_isb;
+    // Stage 2: AddRoundKey only (original master key)
+    wire [127:0] s10b_ak;  aes_add_round_key          ark0 (.state_in(s10a),    .round_key(key_reg), .state_out(s10b_ak));
+    reg  [127:0] s10b;     always @(posedge clk) s10b <= s10b_ak;
+
+    // ------------------------------------------------------------------
+    // Valid pipeline — 20-bit shift register (II = 1)
+    // ------------------------------------------------------------------
     reg [19:0] valid_pipe;
-    
     always @(posedge clk) begin
-        if (rst)
-            valid_pipe <= 20'b0;
-        else
-            valid_pipe <= {valid_pipe[18:0], start};
+        if (rst) valid_pipe <= 20'b0;
+        else     valid_pipe <= {valid_pipe[18:0], valid_in};
     end
-    
-    assign done = valid_pipe[19];
+
+    assign valid_out = valid_pipe[19];
+    assign block_out = s10b;
 
 `ifndef SYNTHESIS
     initial begin
@@ -147,5 +187,4 @@ module aes128_decrypt_unrolled (
 `endif
 
 endmodule
-
 `default_nettype wire
