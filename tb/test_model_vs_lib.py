@@ -6,7 +6,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
 # tb/test_model_vs_lib.py
 import os, random, pytest
-from Cryptodome.Cipher import AES
+from Crypto.Cipher import AES
 
 # Student model under test
 from model.aes128 import encrypt_block,decrypt_block
