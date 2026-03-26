@@ -4,7 +4,7 @@ cocotb-coverage==2.0.0
 pytest
 pytest-html
 pytest-cov
-pycryptodomex
+pycryptodome
 pyyaml
 python-constraint
 
